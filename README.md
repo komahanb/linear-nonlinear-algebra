@@ -1,3 +1,6 @@
+# Iterative Methods -- A Fortran-Python library for linear and
+# nonlinear algebra
+
 Directories:
 homeworks/ contains the specific post processing done for homeworks
 src/ contains the Fortran source files
