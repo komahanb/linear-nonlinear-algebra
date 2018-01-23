@@ -1513,4 +1513,97 @@ contains
 
   end subroutine assert
 
+
+  !-------------------------------------------------------------------!
+  ! Solve an upper triangular linear system using backward
+  ! substitution procedure starting from the last equation.
+  ! ------------------------------------------------------------------!
+  
+  pure subroutine backsub(U, b, x, flag)
+
+    ! inputs and outputs
+    real(dp), intent(in)    :: U(:,:)
+    real(dp), intent(in)    :: b(:)
+    real(dp), intent(inout) :: x(:)
+    integer , intent(inout) :: flag 
+
+    ! local variables
+    integer :: i, j, m, n
+
+    ! zero result vector for safety
+    x = 0.0d0
+
+    ! Size of the system
+    m = size(U(:,1))
+    n = size(U(1,:))
+
+    ! find the last variable
+    if (abs(U(m,m)) .le. tiny(1.0d0)) then
+       flag = -1
+       return
+    end if
+    x(m) = b(m)/U(m,m)
+
+    ! find the other unknowns
+    rows: do i = m-1, 1, -1
+       if (abs(U(i,i)) .le. tiny(1.0d0)) then
+          flag = -1
+          return
+       else
+          ! RHS - take the known values to RHS (columnwise sum)
+          x(i) = b(i) - sum(U(i,i+1:n)*x(i+1:n))
+          x(i) = x(i)/U(i,i)
+       end if
+    end do rows
+
+    flag = 0
+
+  end subroutine backsub
+
+  !-------------------------------------------------------------------!
+  ! Solve a lower triangular linear system using forward substitution
+  ! procedure starting from the first equation.
+  ! ------------------------------------------------------------------!
+  
+  pure subroutine fwdsub(L, b, x, flag)
+
+    ! inputs and outputs
+    real(dp), intent(in)    :: L(:,:)
+    real(dp), intent(in)    :: b(:)
+    real(dp), intent(inout) :: x(:)
+    integer , intent(inout) :: flag 
+
+    ! local variables
+    integer :: i, j, m, n
+
+    ! zero result vector for safety
+    x = 0.0d0
+
+    ! Size of the system
+    m = size(L(:,1))
+    n = size(L(1,:))
+
+    ! find the last variable
+    if (abs(L(1,1)) .le. tiny(1.0d0)) then
+       flag = -1
+       return
+    end if
+    x(1) = b(1)/L(1,1)
+
+    ! find the other unknowns
+    rows: do i = 2, m
+       if (abs(L(i,i)) .le. tiny(1.0d0)) then
+          flag = -1
+          return
+       else
+          ! RHS - take the known values to RHS (columnwise sum)
+          x(i) = b(i) - sum(L(i,1:i-1)*x(1:i-1))
+          x(i) = x(i)/L(i,i)
+       end if
+    end do rows
+
+    flag = 0
+
+  end subroutine fwdsub
+
 end module linear_algebra
