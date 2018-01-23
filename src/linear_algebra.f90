@@ -18,11 +18,14 @@ module linear_algebra
   private
 
   ! expose only a required functions
-  public :: eig, eigvals, eigh              ! eigenvals and vec
-  public :: inv, solve, lstsq, svdvals, svd ! linear system
-  public :: det, eye, diag, trace           ! matrix utils
-  public :: assert, stop_error              ! misc
-  
+  public :: eig, eigvals, eigh                ! eigenvals and vec
+  public :: inv, solve, lstsq, svdvals, svd   ! linear system
+  public :: det, eye, diag, trace, triu!, tril ! matrix utils
+  public :: assert, stop_error                ! misc
+
+  ! Iterative solvers
+  public :: dsor, fwdsub, backsub
+
   ! Module parameters  
   complex(dp), parameter :: i_ = (0, 1)
   
@@ -101,6 +104,8 @@ module linear_algebra
   interface diag
      module procedure ddiag
      module procedure zdiag
+     !module procedure ddiagfrommat
+     !module procedure zdiagfrommat
   end interface diag
 
   ! trace of real/complex matrices:
@@ -109,6 +114,11 @@ module linear_algebra
      module procedure ztrace
   end interface trace
 
+  ! Upper triangular matrix
+  interface triu
+     module procedure dtriu     
+  end interface triu
+
   ! assert shape of matrices:
   interface assert_shape
      module procedure dassert_shape
@@ -116,6 +126,62 @@ module linear_algebra
   end interface assert_shape
 
 contains
+
+  subroutine dsor(A, b, omega, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: b(:)
+    real(dp), intent(in) :: omega
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+    real(dp), allocatable :: D(:,:), E(:,:), F(:,:)
+    integer :: nrows, ncols, i, j
+
+    nrows = size(A(:,1))
+    ncols = size(A(1,:))
+
+    allocate(D, E, F, source=A)
+    D = 0.0d0
+    E = 0.0d0
+    F = 0.0d0
+
+    ! Split matrix A = D-E-F
+    do j = 1, ncols
+       do i = 1, nrows
+          if (i .eq. j) then
+             D(i,j) = A(i,j)
+          else if (i .gt. j) then
+             E(i,j) = -A(i,j)
+          else
+             F(i,j) = -A(i,j)
+          end if
+       end do
+    end do
+
+    ! Apply Iterative scheme until tolerance is achieved
+    tol = huge(0.0d0)
+    iter = 0    
+    do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
+       print *, tol, max_tol, iter, max_it
+
+       ! Gauss Seidel/SOR Iteration
+
+       ! Compute norms and increment iteration
+       tol = tol/10.0d0
+       iter = iter + 1
+    end do
+    
+    flag = 0
+
+    deallocate(D, E, F)
+
+  end subroutine dsor
 
   !-------------------------------------------------------------------!
   ! Get the eigenvalues and eigenvectors of a real matrix.
@@ -1176,6 +1242,33 @@ contains
   end function zdiag
 
   !-------------------------------------------------------------------!
+  ! Construct real matrix from upper triangular elements
+  !-------------------------------------------------------------------!
+  
+  pure function dtriu(A) result(U)
+
+    real(dp), intent(in)  :: A(:,:)
+    real(dp), allocatable :: U(:,:)
+    integer               :: i, j, n
+
+    n = size(A(1,:))
+
+    allocate(U(n,n))
+    U = 0.0_dp
+
+     do concurrent (i=1:n)
+         U(i+1:n,i) = A(:,i)
+      end do
+
+    do i = 1, n
+       do j = i, n
+          U(j,i) = A(j,i)
+       end do
+    end do
+
+  end function dtriu
+
+  !-------------------------------------------------------------------!
   ! Return trace along the main diagonal of a real matrix
   !-------------------------------------------------------------------!
 
@@ -1512,8 +1605,7 @@ contains
     if (.not. condition) call stop_error("Assert failed.")
 
   end subroutine assert
-
-
+  
   !-------------------------------------------------------------------!
   ! Solve an upper triangular linear system using backward
   ! substitution procedure starting from the last equation.
@@ -1605,5 +1697,75 @@ contains
     flag = 0
 
   end subroutine fwdsub
-
+ 
 end module linear_algebra
+
+program test
+
+  use linear_algebra
+
+  implicit none
+
+  real(8), allocatable :: L(:,:), U(:,:)
+  real(8), allocatable :: b(:), x1(:), x2(:)
+  integer :: i, j, m, n, flag
+
+  m = 10
+  n = 10
+
+  allocate(L(m,n))
+  allocate(U(m,n))
+  allocate(b(m))
+  allocate(x1(m))
+  allocate(x2(m))
+
+  call random_number(L)
+  call random_number(U)
+  call random_number(b)
+  
+  ! Zero the upper/lowe rtriangular part
+  do j = 1, m 
+     do i = 1, n
+        if (i .gt. j) then
+           U(i,j) = 0.0d0
+        else if (i .eq. j) then           
+        else
+           L(i,j) = 0.0d0
+        end if
+     end do
+  end do
+  
+  call fwdsub(L, b, x1, flag)
+  print *, flag, x1 - solve(L,b)
+
+  call backsub(U, b, x2, flag)
+  print *, flag, x2 - solve(U, b)
+
+  deallocate(L, U, b, x1, x2)
+
+  
+  test_sor: block
+
+    real(8), allocatable :: x(:), bb(:), A(:,:)
+    integer :: iter, flag    
+    real(8) :: tol
+
+    allocate(A(2,2), bb(2), x(2))
+
+    A(1,1) = 2.0d0
+    A(2,1) = 5.0d0
+    A(1,2) = 3.0d0
+    A(2,2) = 7.0d0
+
+    bb(1) = 11.0d0
+    bb(2) = 13.0d0
+
+    call dsor(A, bb, 1.0d0, 1000, 1.0d-8, x, iter, tol, flag)
+
+    print *, x, iter, tol, flag
+
+    deallocate(A, bb, x)
+
+  end block test_sor
+
+end program
