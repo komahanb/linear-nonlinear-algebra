@@ -189,7 +189,7 @@ contains
 
        x = xnew
 
-       print *, iter, tol
+       !print *, iter, tol
               
        iter = iter + 1
        
@@ -259,7 +259,7 @@ contains
 
        x = xnew
 
-       print *, iter, tol
+       !print *, iter, tol
 
        iter = iter + 1
 
@@ -317,19 +317,19 @@ contains
     ! Apply Iterative scheme until tolerance is achieved
     tol = huge(0.0d0)
     iter = 0
-    
+
     do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
        
-       ! Gauss Seidel/SOR Iteration
-       c = b + matmul(D/omega -D + U, x)
-       call fwdsub(D/omega-L, c, xnew, flag)
-       
+       ! Gauss Seidel/SOR Iteration     
+       c = omega*b + matmul((1.0d0-omega)*D + omega*U, x)
+       call fwdsub(D-omega*L, c, xnew, flag)
+
        ! Compute norms and increment iteration
        tol = norm2(xnew-x)
 
        x = xnew
 
-       print *, iter, tol
+       !print *, iter, tol
               
        iter = iter + 1
        
@@ -1864,80 +1864,171 @@ program test
   use linear_algebra
 
   implicit none
+!!$
+!!$  test_sub : block
+!!$    
+!!$    real(8), allocatable :: L(:,:), U(:,:)
+!!$    real(8), allocatable :: b(:), x1(:), x2(:)
+!!$    integer :: i, j, m, n, flag
+!!$    
+!!$    m = 100
+!!$    n = 100
+!!$
+!!$    allocate(L(m,n))
+!!$    allocate(U(m,n))
+!!$    allocate(b(m))
+!!$    allocate(x1(m))
+!!$    allocate(x2(m))
+!!$
+!!$    call random_number(L)
+!!$    call random_number(U)
+!!$    call random_number(b)
+!!$
+!!$    ! Zero the upper/lowe rtriangular part
+!!$    do j = 1, m 
+!!$       do i = 1, n
+!!$          if (i .gt. j) then
+!!$             U(i,j) = 0.0d0
+!!$          else if (i .eq. j) then           
+!!$          else
+!!$             L(i,j) = 0.0d0
+!!$          end if
+!!$       end do
+!!$    end do
+!!$
+!!$    call fwdsub(L, b, x1, flag)
+!!$    print *, flag, x1 - solve(L,b)
+!!$     
+!!$    call backsub(U, b, x2, flag)
+!!$    print *, flag, x2 - solve(U, b)
+!!$
+!!$    deallocate(L, U, b, x1, x2)
+!!$
+!!$  end block test_sub
+!!$  
+!!$  test_iter_sol: block
+!!$
+!!$    real(8), allocatable :: x(:), bb(:), A(:,:)
+!!$    integer :: iter, flag    
+!!$    real(8) :: tol,omega
+!!$
+!!$    allocate(A(2,2), bb(2), x(2))
+!!$
+!!$    A(1,1) = 12.0d0
+!!$    A(2,1) = 5.0d0
+!!$
+!!$    A(1,2) = 3.0d0
+!!$    A(2,2) = 7.0d0
+!!$
+!!$    bb(1) = 11.0d0
+!!$    bb(2) = 13.0d0
+!!$
+!!$    x(1) = 0.0d0
+!!$    x(2) = 0.0d0
+!!$
+!!$    call dseidel(A, bb, 1.0d0, 1000, 1.0d-8, x, iter, tol, flag)
+!!$    print *, x, iter, tol, flag, solve(A, bb)
+!!$
+!!$    call dsor(A, bb, 1.1d0, 1000, 1.0d-8, x, iter, tol, flag)
+!!$    print *, x, iter, tol, flag, solve(A, bb)
+!!$
+!!$    call djacobi(A, bb, 1000, 1.0d-8, x, iter, tol, flag)
+!!$    print *, x, iter, tol, flag, solve(A, bb)
+!!$
+!!$    deallocate(A, bb, x)
+!!$
+!!$  end block test_iter_sol
+!!$
+!!$  print *, "test ode"
+!!$
+!!$  test_ode: block
+!!$    real(8) :: V(4,4), rhs(4)
+!!$    call assemble_matrix(0.0d0, 1.0d0, 4, V, rhs)
+!!$  end block test_ode
 
-  test_sub : block
+  print *, "problem5"
+  problem5: block
     
-    real(8), allocatable :: L(:,:), U(:,:)
-    real(8), allocatable :: b(:), x1(:), x2(:)
-    integer :: i, j, m, n, flag
-    
-    m = 100
-    n = 100
+    integer, parameter :: npts = 1000
+    real(8), parameter :: max_tol = 1.0d-3
+    integer, parameter :: max_it  = 100000
 
-    allocate(L(m,n))
-    allocate(U(m,n))
-    allocate(b(m))
-    allocate(x1(m))
-    allocate(x2(m))
+    real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts)
+    integer :: iter, flag, i, j
+    real(8) :: tol, omega(16)
+    real(8) :: scale = 1.0d0
 
-    call random_number(L)
-    call random_number(U)
-    call random_number(b)
+    print *, 'gauss seidel'
+    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)  
+    call dseidel(A, b, 1.0d0, max_it, max_tol, x, iter, tol, flag)
+    print *, tol, iter
 
-    ! Zero the upper/lowe rtriangular part
-    do j = 1, m 
-       do i = 1, n
-          if (i .gt. j) then
-             U(i,j) = 0.0d0
-          else if (i .eq. j) then           
-          else
-             L(i,j) = 0.0d0
-          end if
-       end do
+    print *, 'SOR'   
+    do j = 1, 16
+       omega(j) = 0.4 + dble(j)/10.0d0
+       call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+       call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
+       print *, omega(j), tol, iter !x, iter, tol, flag, solve(A, b)
     end do
 
-    call fwdsub(L, b, x1, flag)
-    print *, flag, x1 - solve(L,b)
-     
-    call backsub(U, b, x2, flag)
-    print *, flag, x2 - solve(U, b)
+    print *, 'gauss jacobi'
+    !call assemble_system(0.0d0, 1.0d0, npts, A, b, x)  
+    !call dsor(A, b, 1.5d0, max_it, max_tol, x, iter, tol, flag)
+    !print *, tol, iter
+    
+    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)  
+    call djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
+    print *, tol, iter
 
-    deallocate(L, U, b, x1, x2)
+    xtmp = solve(A,b)
+    do i = 1, npts
+       print *, dble(i)/dble(npts), x(i), xtmp(i)
+    end do
 
-  end block test_sub
-  
-  test_iter_sol: block
+    !print *,tol, iter !x, iter, tol, flag, solve(A, b)
 
-    real(8), allocatable :: x(:), bb(:), A(:,:)
-    integer :: iter, flag    
-    real(8) :: tol,omega
+  end block problem5
 
-    allocate(A(2,2), bb(2), x(2))
-
-    A(1,1) = 12.0d0
-    A(2,1) = 5.0d0
-
-    A(1,2) = 3.0d0
-    A(2,2) = 7.0d0
-
-    bb(1) = 11.0d0
-    bb(2) = 13.0d0
-
-    x(1) = 0.0d0
-    x(2) = 0.0d0
-
-    call dseidel(A, bb, 1.0d0, 1000, 1.0d-8, x, iter, tol, flag)
-    print *, x, iter, tol, flag, solve(A, bb)
-
-
-    call dsor(A, bb, 1.1d0, 1000, 1.0d-8, x, iter, tol, flag)
-    print *, x, iter, tol, flag, solve(A, bb)
-
-    call djacobi(A, bb, 1000, 1.0d-8, x, iter, tol, flag)
-    print *, x, iter, tol, flag, solve(A, bb)
-
-    deallocate(A, bb, x)
-
-  end block test_iter_sol
 
 end program test
+
+subroutine assemble_system(a, b, npts, V, rhs, x)
+
+  real(8), intent(in)  :: a, b ! bound of domain
+  integer              :: npts ! number of points
+  real(8), intent(out) :: V(npts,npts)
+  real(8), intent(out) :: rhs(npts)
+  real(8), intent(out) :: x(npts)
+  integer              :: m, n, i, j
+  real(8) :: h
+
+  h = (b-a)/dble(npts+1)
+  V = 0.0d0
+
+  m = npts
+  n = npts
+  do j = 1, m 
+     do i = 1, n
+        if (i .eq. j-1) then
+           V(i,j) = -1.0d0
+        else if (i .eq. j+1) then           
+           V(i,j) = -1.0d0
+        else if (i .eq. j) then           
+           V(i,i) = 2.0d0 + 4.0d0*h*h
+        else
+           ! skip
+        end if
+     end do
+  end do
+
+  ! Assemble the RHS
+  rhs = 0.0d0
+  rhs(1) = -1.0d0
+  rhs(npts) = 2.0d0
+
+  ! Initial solution profile
+  do i = 1, npts
+     x(i) = 3.0d0*(dble(i)*h) - 1.0d0
+  end do
+
+end subroutine assemble_system
