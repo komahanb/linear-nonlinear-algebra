@@ -24,7 +24,7 @@ module linear_algebra
   public :: assert, stop_error                ! misc
 
   ! Iterative solvers
-  public :: dsor, fwdsub, backsub
+  public :: dsor, djacobi, dseidel, fwdsub, backsub
 
   ! Module parameters  
   complex(dp), parameter :: i_ = (0, 1)
@@ -126,6 +126,150 @@ module linear_algebra
   end interface assert_shape
 
 contains
+  
+  subroutine djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: b(:)
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+    real(dp), allocatable :: D(:,:), L(:,:), U(:,:)
+    real(dp), allocatable :: c(:), xnew(:)
+    
+    integer :: nrows, ncols, i, j
+
+    nrows = size(A(:,1))
+    ncols = size(A(1,:))
+
+    allocate(D, L, U, source=A)
+    D = 0.0d0
+    L = 0.0d0
+    U = 0.0d0
+
+    allocate(c(nrows),xnew(nrows))
+    c = 0.0d0
+    xnew = 0.0d0
+
+    ! Split matrix A = D-L-U
+    do j = 1, ncols
+       do i = 1, nrows
+          if (i .eq. j) then
+             D(i,j) = A(i,j)
+          else if (i .gt. j) then
+             L(i,j) = -A(i,j)
+          else
+             U(i,j) = -A(i,j)
+          end if
+       end do
+    end do
+
+    ! Apply Iterative scheme until tolerance is achieved
+    tol = huge(0.0d0)
+    iter = 0
+    
+    do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
+       
+       ! Gauss Seidel/SOR Iteration
+       c = b + matmul(L+U, x)
+
+       do i = 1, nrows
+          xnew(i) = c(i)/D(i,i)
+       end do
+
+       !call backsub(D, c, xnew, flag)
+       
+       ! Compute norms and increment iteration
+       tol = norm2(xnew-x)
+
+       x = xnew
+
+       print *, iter, tol
+              
+       iter = iter + 1
+       
+    end do
+    
+    flag = 0
+
+    deallocate(D, L, U, c)
+
+  end subroutine djacobi
+  
+  subroutine dseidel(A, b, omega, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: b(:)
+    real(dp), intent(in) :: omega
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+    real(dp), allocatable :: D(:,:), L(:,:), U(:,:)
+    real(dp), allocatable :: c(:), xnew(:)
+
+    integer :: nrows, ncols, i, j
+
+    nrows = size(A(:,1))
+    ncols = size(A(1,:))
+
+    allocate(D, L, U, source=A)
+    D = 0.0d0
+    L = 0.0d0
+    U = 0.0d0
+
+    allocate(c(nrows),xnew(nrows))
+    c = 0.0d0
+    xnew = 0.0d0
+
+    ! Split matrix A = D - L - U
+    do j = 1, ncols
+       do i = 1, nrows
+          if (i .eq. j) then
+             D(i,j) = A(i,j)
+          else if (i .gt. j) then
+             L(i,j) = -A(i,j)
+          else
+             U(i,j) = -A(i,j)
+          end if
+       end do
+    end do
+
+    ! Apply Iterative scheme until tolerance is achieved
+    tol = huge(0.0d0)
+    iter = 0
+
+    do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
+
+       ! Gauss Seidel/SOR Iteration
+       c = b + matmul(U, x)
+       call fwdsub(D-L, c, xnew, flag)
+
+       ! Compute norms and increment iteration
+       tol = norm2(xnew-x)
+
+       x = xnew
+
+       print *, iter, tol
+
+       iter = iter + 1
+
+    end do
+
+    flag = 0
+
+    deallocate(D, L, U, c)
+
+  end subroutine dseidel
 
   subroutine dsor(A, b, omega, max_it, max_tol, x, iter, tol, flag)
 
@@ -140,46 +284,60 @@ contains
     real(dp), intent(out)   :: tol
     integer , intent(out)   :: flag
 
-    real(dp), allocatable :: D(:,:), E(:,:), F(:,:)
+    real(dp), allocatable :: D(:,:), L(:,:), U(:,:)
+    real(dp), allocatable :: c(:), xnew(:)
+    
     integer :: nrows, ncols, i, j
 
     nrows = size(A(:,1))
     ncols = size(A(1,:))
 
-    allocate(D, E, F, source=A)
+    allocate(D, L, U, source=A)
     D = 0.0d0
-    E = 0.0d0
-    F = 0.0d0
+    L = 0.0d0
+    U = 0.0d0
 
-    ! Split matrix A = D-E-F
+    allocate(c(nrows),xnew(nrows))
+    c = 0.0d0
+    xnew = 0.0d0
+
+    ! Split matrix A = D - L - U
     do j = 1, ncols
        do i = 1, nrows
           if (i .eq. j) then
              D(i,j) = A(i,j)
           else if (i .gt. j) then
-             E(i,j) = -A(i,j)
+             L(i,j) = -A(i,j)
           else
-             F(i,j) = -A(i,j)
+             U(i,j) = -A(i,j)
           end if
        end do
     end do
 
     ! Apply Iterative scheme until tolerance is achieved
     tol = huge(0.0d0)
-    iter = 0    
+    iter = 0
+    
     do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
-       print *, tol, max_tol, iter, max_it
-
+       
        ! Gauss Seidel/SOR Iteration
-
+       c = b + matmul(D/omega -D + U, x)
+       call fwdsub(D/omega-L, c, xnew, flag)
+       
        ! Compute norms and increment iteration
-       tol = tol/10.0d0
+       tol = norm2(xnew-x)
+
+       x = xnew
+
+       print *, iter, tol
+              
        iter = iter + 1
+       
     end do
     
     flag = 0
 
-    deallocate(D, E, F)
+    deallocate(D, L, U, c)
 
   end subroutine dsor
 
@@ -1611,7 +1769,7 @@ contains
   ! substitution procedure starting from the last equation.
   ! ------------------------------------------------------------------!
   
-  pure subroutine backsub(U, b, x, flag)
+  subroutine backsub(U, b, x, flag)
 
     ! inputs and outputs
     real(dp), intent(in)    :: U(:,:)
@@ -1634,6 +1792,7 @@ contains
        flag = -1
        return
     end if
+    
     x(m) = b(m)/U(m,m)
 
     ! find the other unknowns
@@ -1706,66 +1865,79 @@ program test
 
   implicit none
 
-  real(8), allocatable :: L(:,:), U(:,:)
-  real(8), allocatable :: b(:), x1(:), x2(:)
-  integer :: i, j, m, n, flag
+  test_sub : block
+    
+    real(8), allocatable :: L(:,:), U(:,:)
+    real(8), allocatable :: b(:), x1(:), x2(:)
+    integer :: i, j, m, n, flag
+    
+    m = 100
+    n = 100
 
-  m = 10
-  n = 10
+    allocate(L(m,n))
+    allocate(U(m,n))
+    allocate(b(m))
+    allocate(x1(m))
+    allocate(x2(m))
 
-  allocate(L(m,n))
-  allocate(U(m,n))
-  allocate(b(m))
-  allocate(x1(m))
-  allocate(x2(m))
+    call random_number(L)
+    call random_number(U)
+    call random_number(b)
 
-  call random_number(L)
-  call random_number(U)
-  call random_number(b)
+    ! Zero the upper/lowe rtriangular part
+    do j = 1, m 
+       do i = 1, n
+          if (i .gt. j) then
+             U(i,j) = 0.0d0
+          else if (i .eq. j) then           
+          else
+             L(i,j) = 0.0d0
+          end if
+       end do
+    end do
+
+    call fwdsub(L, b, x1, flag)
+    print *, flag, x1 - solve(L,b)
+     
+    call backsub(U, b, x2, flag)
+    print *, flag, x2 - solve(U, b)
+
+    deallocate(L, U, b, x1, x2)
+
+  end block test_sub
   
-  ! Zero the upper/lowe rtriangular part
-  do j = 1, m 
-     do i = 1, n
-        if (i .gt. j) then
-           U(i,j) = 0.0d0
-        else if (i .eq. j) then           
-        else
-           L(i,j) = 0.0d0
-        end if
-     end do
-  end do
-  
-  call fwdsub(L, b, x1, flag)
-  print *, flag, x1 - solve(L,b)
-
-  call backsub(U, b, x2, flag)
-  print *, flag, x2 - solve(U, b)
-
-  deallocate(L, U, b, x1, x2)
-
-  
-  test_sor: block
+  test_iter_sol: block
 
     real(8), allocatable :: x(:), bb(:), A(:,:)
     integer :: iter, flag    
-    real(8) :: tol
+    real(8) :: tol,omega
 
     allocate(A(2,2), bb(2), x(2))
 
-    A(1,1) = 2.0d0
+    A(1,1) = 12.0d0
     A(2,1) = 5.0d0
+
     A(1,2) = 3.0d0
     A(2,2) = 7.0d0
 
     bb(1) = 11.0d0
     bb(2) = 13.0d0
 
-    call dsor(A, bb, 1.0d0, 1000, 1.0d-8, x, iter, tol, flag)
+    x(1) = 0.0d0
+    x(2) = 0.0d0
 
-    print *, x, iter, tol, flag
+    call dseidel(A, bb, 1.0d0, 1000, 1.0d-8, x, iter, tol, flag)
+    print *, x, iter, tol, flag, solve(A, bb)
+
+
+    call dsor(A, bb, 1.1d0, 1000, 1.0d-8, x, iter, tol, flag)
+    print *, x, iter, tol, flag, solve(A, bb)
+
+    call djacobi(A, bb, 1000, 1.0d-8, x, iter, tol, flag)
+    print *, x, iter, tol, flag, solve(A, bb)
 
     deallocate(A, bb, x)
 
-  end block test_sor
+  end block test_iter_sol
 
-end program
+end program test
