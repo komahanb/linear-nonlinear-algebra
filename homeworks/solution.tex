@@ -1,0 +1,302 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{fancyhdr}
+\usepackage{extramarks}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage[plain]{algorithm}
+\usepackage{algpseudocode}
+\usepackage{fancyvrb}
+\usetikzlibrary{automata,positioning}
+
+%
+% Basic Document Settings
+%
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+\linespread{1.1}
+
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName}
+\chead{\hmwkClass\ : \hmwkTitle}
+\rhead{\firstxmark}
+\lfoot{\lastxmark}
+\cfoot{\thepage}
+
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+\setlength\parindent{0pt}
+
+%
+% Create Problem Sections
+%
+
+\newcommand{\enterProblemHeader}[1]{
+    \nobreak\extramarks{}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+}
+
+\newcommand{\exitProblemHeader}[1]{
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \stepcounter{#1}
+    \nobreak\extramarks{Problem \arabic{#1}}{}\nobreak{}
+}
+
+\setcounter{secnumdepth}{0}
+\newcounter{partCounter}
+\newcounter{homeworkProblemCounter}
+\setcounter{homeworkProblemCounter}{1}
+\nobreak\extramarks{Problem \arabic{homeworkProblemCounter}}{}\nobreak{}
+
+%
+% Homework Problem Environment
+%
+% This environment takes an optional argument. When given, it will adjust the
+% problem counter. This is useful for when the problems given for your
+% assignment aren't sequential. See the last 3 problems of this template for an
+% example.
+%
+\newenvironment{homeworkProblem}[1][-1]{
+    \ifnum#1>0
+        \setcounter{homeworkProblemCounter}{#1}
+    \fi
+    \section{Problem \arabic{homeworkProblemCounter}}
+    \setcounter{partCounter}{1}
+    \enterProblemHeader{homeworkProblemCounter}
+}{
+    \exitProblemHeader{homeworkProblemCounter}
+}
+
+%
+% Homework Details
+%   - Title
+%   - Due date
+%   - Class
+%   - Section/Time
+%   - Instructor
+%   - Author
+%
+
+\newcommand{\hmwkTitle}{Homework\ \#1}
+\newcommand{\hmwkDueDate}{\today}
+\newcommand{\hmwkClass}{MATH6644 Iterative Methods}
+\newcommand{\hmwkClassTime}{}
+\newcommand{\hmwkClassInstructor}{}
+\newcommand{\hmwkAuthorName}{Komahan Boopathy}
+
+%
+% Title Page
+%
+
+\title{
+    \vspace{2in}
+    \textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\
+    \normalsize\vspace{0.1in}\small{\hmwkDueDate}\\
+    %\vspace{0.1in}\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+    \vspace{3in}
+}
+
+\author{\textbf{\Large\hmwkAuthorName}}
+\date{}
+
+\renewcommand{\part}[1]{\textbf{\large Part \Alph{partCounter}}\stepcounter{partCounter}\\}
+
+%
+% Various Helper Commands
+%
+
+% Useful for algorithms
+\newcommand{\alg}[1]{\textsc{\bfseries \footnotesize #1}}
+
+% For derivatives
+\newcommand{\deriv}[1]{\frac{\mathrm{d}}{\mathrm{d}x} (#1)}
+
+% For partial derivatives
+\newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}}
+
+% Integral dx
+\newcommand{\dx}{\mathrm{d}x}
+
+% Alias for the Solution section header
+\newcommand{\solution}{\textbf{\large Solution}}
+
+% Probability commands: Expectation, Variance, Covariance, Bias
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Bias}{\mathrm{Bias}}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\pagebreak
+
+\begin{homeworkProblem}
+  Find an orthonormal basis for the column space of matrix
+  $$A = 
+  \begin{bmatrix}
+    1 & 1 & 0 \\
+    1 & 0 & 2 \\
+    1 & 0 & 1 \\
+    1 & 1 & -1
+  \end{bmatrix}$$
+
+  The columns $\mathbf{c_1}$, $\mathbf{c_1}$ and $\mathbf{c_3}$ are
+  \underline{not orthonormal} to each other. Gram-Scmidt orthogonalization
+  procedure is used to orthogonalize the columns as follows. 
+  \\
+
+  The first
+  column $\mathbf{c_1}$ is chosen as the reference. 
+  $$\mathbf{v_1} = \mathbf{c_1} = 
+  \begin{bmatrix}
+    1 \\
+    1 \\
+    1 \\
+    1
+  \end{bmatrix}$$
+
+  The second vector
+  \begin{equation*}
+    \begin{split}
+    \mathbf{v_2} & = \mathbf{c_2} - \dfrac{(\mathbf{c_2},\mathbf{v_1})}{(\mathbf{v_1},\mathbf{v_1})}\mathbf{v_1} \\
+    & =   \begin{bmatrix}
+    1 \\
+    0 \\
+    0 \\
+    1
+  \end{bmatrix}
+    -\dfrac{1}{2}
+    \begin{bmatrix}
+      1 \\
+      1 \\
+      1 \\
+      1
+    \end{bmatrix}
+     = 
+    \begin{bmatrix}
+      1/2 \\
+      -1/2 \\
+      -1/2 \\
+      1/2
+    \end{bmatrix}
+    \end{split}
+  \end{equation*}
+
+  The third vector
+    \begin{equation*}
+  \begin{split}
+      \mathbf{v_3}  & = \mathbf{c_3} - \dfrac{(\mathbf{c_3},\mathbf{v_1})}{(\mathbf{v_1},\mathbf{v_1})}\mathbf{v_1} - \dfrac{(\mathbf{c_3},\mathbf{v_2})}{(\mathbf{v_2},\mathbf{v_2})}\mathbf{v_2} \\
+      & =
+      \begin{bmatrix}
+        0 \\
+        2 \\
+        1 \\
+        -1
+      \end{bmatrix}
+      -\dfrac{1}{2}
+      \begin{bmatrix}
+        1 \\
+        1 \\
+        1 \\
+        1
+      \end{bmatrix}
+      +\dfrac{2}{1}
+      \begin{bmatrix}
+      1/2 \\
+      -1/2 \\
+      -1/2 \\
+      1/2
+      \end{bmatrix}
+     = 
+     \begin{bmatrix}
+       1/2 \\
+       1/2 \\
+       -1/2 \\
+       -1/2
+    \end{bmatrix}
+    \end{split}
+  \end{equation*}
+
+  Finally these vectors are \underline{normalized to unity} and the corresponding
+  orthonormal basis for the column space of $\mathbf{A}$ is
+  $$\begin{bmatrix}
+    1/2 &  1/2 & 1/2  \\
+    1/2 & -1/2 & 1/2  \\
+    1/2 & -1/2 & -1/2 \\
+    1/2 &  1/2 & -1/2
+  \end{bmatrix}$$
+
+\end{homeworkProblem}
+
+\begin{homeworkProblem}
+  Consider a matrix
+  $$A = 
+  \begin{bmatrix}
+     2 & 2 & -2 \\
+     2 & 6 & 0 \\
+    -2 & 0 & 7 
+  \end{bmatrix}$$
+ 
+  \paragraph{a.} 
+  \emph{Is this matrix diagonalizable? Why or why not?}
+  \medskip
+  A matrix is diagonalizable if there are $n$ linearly independent
+  eigenvectors. Then, we can do a similarity transformation of the
+  form $J=V^{-1}AV$, where $V$ is the matrix of eigenvectors.  
+  \\ 
+  
+  The
+  eigenvalues are found using $|A-\lambda I|=0$ which results in the
+  cubic characteristic equation
+  $$
+  -\lambda^3 + 15\lambda^2 -60\lambda + 32 = 0
+  $$ 
+
+  The eigenvalues are $\lambda_1 = 8$, $\lambda_2 =
+  \frac{7+\sqrt{33}}{2}$ and $\lambda_2 = \frac{7-\sqrt{33}}{2}$ The
+  eigenvalues are distinct (not repeated), therefore we can find
+  eigenvectors that form a simularity transformation as shown
+  above. Therefore it is possible to diagonalize the matrix.
+
+  \paragraph{b.}
+  \emph{Compute the 1-norm, 2-norm, Frobenius norm and infinite-norm.}
+  \medskip
+
+  \begin{itemize}
+  \item  1-norm of the matrix is the largest column sum i.e. $\max
+    \{\sum{c_1}, \sum{c_2}, \sum{c_3}\} = \max\{6,8,9\}=9$
+
+  \item  2-norm of the matrix is the largest singular value (eigenvalue
+    in this case) i.e., $\max \{8,\frac{7-\sqrt{33}}{2},\frac{7-\sqrt{33}}{2}\} = 8$.
+
+  \item  Infinite-norm of the matrix is the largest row sum i.e., $\max
+    \{\sum{r_1}, \sum{r_2}, \sum{r_3}\} = \max\{8,8,9\}=9$
+
+  \item Frobenius-norm of the matrix is $\sum_{i,j} |A_{ij}|^2 = \sqrt{2^2+2^2+2^2+2^2+6^2+2^2+7^2} = 10.247$.
+
+  \end{itemize}
+
+  \paragraph{c.} 
+  \emph{Compute the spectral radius of A. Compare and comment on the values from (b) and (c).}
+  \medskip
+
+  The spectral radius of A is $\rho(A) = \max\{\lambda_i\} = 8$.  In
+  this case, the spectral radius is same as the 2-norm of the matrix
+  A. The 2-norm of the matrix is the smallest norm of the different
+  computed norms of the matrix.
+
+\end{homeworkProblem}
+
+\end{document}
