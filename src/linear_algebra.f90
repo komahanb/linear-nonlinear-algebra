@@ -20,7 +20,7 @@ module linear_algebra
   ! expose only a required functions
   public :: eig, eigvals, eigh                ! eigenvals and vec
   public :: inv, solve, lstsq, svdvals, svd   ! linear system
-  public :: det, eye, diag, trace, triu!, tril ! matrix utils
+  public :: det, eye, diag, trace, triu       !, tril ! matrix utils
   public :: assert, stop_error                ! misc
 
   ! Iterative solvers
@@ -172,6 +172,8 @@ contains
     ! Apply Iterative scheme until tolerance is achieved
     tol = huge(0.0d0)
     iter = 0
+
+    open(10, file='jacobi.log', action='write',position='append')
     
     do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
        
@@ -189,11 +191,14 @@ contains
 
        x = xnew
 
+       write(10,*) iter, tol
        !print *, iter, tol
               
        iter = iter + 1
        
     end do
+    
+    close(10)
     
     flag = 0
 
@@ -247,7 +252,9 @@ contains
     ! Apply Iterative scheme until tolerance is achieved
     tol = huge(0.0d0)
     iter = 0
-
+    
+    open(10, file='seidel.log', action='write',position='append')
+    
     do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
 
        ! Gauss Seidel/SOR Iteration
@@ -259,11 +266,15 @@ contains
 
        x = xnew
 
+       write(10,*) iter, tol
+       
        !print *, iter, tol
 
        iter = iter + 1
 
     end do
+
+    close(10)
 
     flag = 0
 
@@ -318,6 +329,8 @@ contains
     tol = huge(0.0d0)
     iter = 0
 
+    open(10, file='sor.log', action='write',position='append')
+        
     do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
        
        ! Gauss Seidel/SOR Iteration     
@@ -329,11 +342,14 @@ contains
 
        x = xnew
 
+       write(10, *) iter, tol
        !print *, iter, tol
               
        iter = iter + 1
        
     end do
+
+    close(10)
     
     flag = 0
 
@@ -1773,7 +1789,7 @@ contains
 
     ! inputs and outputs
     real(dp), intent(in)    :: U(:,:)
-    real(dp), intent(in)    :: b(:)
+    real(dp), intent(in)    :: b(:)    
     real(dp), intent(inout) :: x(:)
     integer , intent(inout) :: flag 
 
@@ -1863,7 +1879,7 @@ program test
 
   use linear_algebra
 
-  implicit none
+  implicit none  
 !!$
 !!$  test_sub : block
 !!$    
@@ -1949,46 +1965,59 @@ program test
   print *, "problem5"
   problem5: block
     
-    integer, parameter :: npts = 1000
-    real(8), parameter :: max_tol = 1.0d-3
+    integer, parameter :: npts = 500
+    real(8), parameter :: max_tol = 1.0d-5
     integer, parameter :: max_it  = 100000
 
     real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts)
     integer :: iter, flag, i, j
-    real(8) :: tol, omega(16)
+    real(8) :: tol, omega(20)
     real(8) :: scale = 1.0d0
 
-    print *, 'gauss seidel'
-    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)  
-    call dseidel(A, b, 1.0d0, max_it, max_tol, x, iter, tol, flag)
-    print *, tol, iter
+    print *, 'gauss seidel'    
+    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+    xtmp = solve(A,b)
 
+!!$    x = 0.1d0
+!!$    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+!!$    call dseidel(A, b, 1.0d0, max_it, max_tol, x, iter, tol, flag)
+!!$    print *, 'seidel', tol, iter    
+!!$    open(11, file='seidel.dat')
+!!$    do i = 1, npts
+!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+!!$    end do
+!!$    close(11)
+    
     print *, 'SOR'   
-    do j = 1, 16
+    do j = 1, 19
        omega(j) = 0.4 + dble(j)/10.0d0
        call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+       !x = 0.1d0
        call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
-       print *, omega(j), tol, iter !x, iter, tol, flag, solve(A, b)
+       print *, 'sor', omega(j), tol, iter
+           open(11, file='sor.dat')
+    do i = 1, npts
+       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
     end do
+    close(11)    
+    end do
+    open(11, file='sor.dat')
+    do i = 1, npts
+       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+    end do
+    close(11)    
 
     print *, 'gauss jacobi'
-    !call assemble_system(0.0d0, 1.0d0, npts, A, b, x)  
-    !call dsor(A, b, 1.5d0, max_it, max_tol, x, iter, tol, flag)
-    !print *, tol, iter
-    
-    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)  
+    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
     call djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
-    print *, tol, iter
-
-    xtmp = solve(A,b)
+    print *, 'jacobi', tol, iter    
+    open(11, file='jacobi.dat')
     do i = 1, npts
-       print *, dble(i)/dble(npts), x(i), xtmp(i)
+       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
     end do
-
-    !print *,tol, iter !x, iter, tol, flag, solve(A, b)
+    close(11)    
 
   end block problem5
-
 
 end program test
 
