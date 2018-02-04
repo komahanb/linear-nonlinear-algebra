@@ -2,7 +2,7 @@
 
 Directories:
 ------------
-1. homeworks/ contains the specific post processing done for homeworks
+1. test/ contains the specific post-processing/type-setting done for coursework
 2. src/ contains the Fortran source files
 3. python/ contains the python extension modules
 
