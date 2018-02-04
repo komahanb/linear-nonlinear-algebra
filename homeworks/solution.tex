@@ -156,7 +156,6 @@
   \underline{not orthonormal} to each other. Gram-Scmidt orthogonalization
   procedure is used to orthogonalize the columns as follows. 
   \\
-
   The first
   column $\mathbf{c_1}$ is chosen as the reference. 
   $$\mathbf{v_1} = \mathbf{c_1} = 
@@ -240,6 +239,7 @@
 
 \end{homeworkProblem}
 
+\clearpage
 \begin{homeworkProblem}
   Consider a matrix
   $$A = 
@@ -298,7 +298,7 @@
   computed norms of the matrix.
 
 \end{homeworkProblem}
-
+\clearpage
 \begin{homeworkProblem}
   \emph{Give the matrix expression for the symmetric Gauss-Seidel iterations.}
   \medskip
@@ -324,7 +324,7 @@
   substitution method.
 
 \end{homeworkProblem}
-
+\clearpage
 \begin{homeworkProblem}
 Construct a $3 \times 3$ dense matrix with $\rho(A)>1$. Define an
 iteration,
@@ -333,9 +333,66 @@ $$
 $$ 
 Find an example $\mathbf{x_0}$ and $\mathbf{c}$ such that the
 iteration does not converge.
+\medskip
+
+\paragraph{Example}
+
+Let the matrix $A = M-N$.  We define an iteration,
+$$
+\mathbf{x}^{k+1} = G \mathbf{x} + \mathbf{c}.
+$$ where $G = M^{-1}N$ and $c = M^{-1}b$. 
+%Consider a Gauss-Jacobi
+%iteration where $G=I-D^{-1}A$, where $D$ being the diagonal entries of
+%the matrix A.
+Let
+$$\mathbf{G} = 
+\begin{bmatrix}
+  0.1 & 1 & 1 \\
+  1 & 0.1 & 1 \\
+  1 & 1 & 0.1
+\end{bmatrix}$$
+$$
+\mathbf{c} = 
+  \begin{bmatrix}
+    1 \\
+    1 \\
+    1 \\
+  \end{bmatrix}$$
+and 
+$$
+\mathbf{x_0} = 
+  \begin{bmatrix}
+    1 \\
+    2 \\
+    3 \\
+  \end{bmatrix}$$
+The following sequence of solutions is obtained for iterations
+\begin{verbatim}
+1    6.1000    5.2000    4.3000
+2   11.1100   11.9200   12.7300
+3   26.7610   26.0320   25.3030
+4   55.0111   55.6672   56.3233
+5  118.4916  117.9011  117.3106
+\end{verbatim}
+
+\paragraph{Discussion}
+
+It can be seen that the scheme diverges and reaches infinity within a
+hundred iterations. The spectral radius of $\mathbf{G}$ is 2.1 which
+is greater than 1 and therefore we can not expect this iteration to
+converge.  An iterative method is guaranteed to converge if $\rho(G) <
+1$. On the contrary, in this case the spectral radius is greater than
+1 and therefore the iterative method will not converge. The
+convergence is largly not caused by the choice of the initial guess
+$x_0$ , but rather is a properly of the iteration matrix, because it
+is the matrix which enlarges (or diminishes) the solution vector
+repeatedly (unless it is an eigenvector at that iteration). Only, the
+\emph{rate} of convergence is will be affected by $x_0$. Also note
+that the vector $\mathbf{c}$ \emph{simply} translates the solution and
+would not scale the solution up or down.
 
 \end{homeworkProblem}
-
+\clearpage
 \begin{homeworkProblem}
 \emph{Discretize the following differential equation}
   $$ -u^{\prime\prime} + 4 u = 0 $$
@@ -372,8 +429,75 @@ This is a banded tri-diagonal system. The right hand side is
     \vdots\\
     2
   \end{bmatrix}$$
-  %\paragraph{c. Relaxation Parameter}
-  %\paragraph{d. Iterative solutions}
+  There are 1000 unknowns in this problem.
+
+  \paragraph{c. Iterative solutions}
+  The linear system is solved using Gauss-Jacobi, Gauss-Seidel and SOR
+  methods. The stopping tolerance was taken to be $10^{-6}$ and
+  maximum allowed iterations are $10^{5}$. The exact solution is
+  computed using direct factorization method.  Figure~\ref{fig:profile} compares
+  the solutions produced by each of these methods. All methods were
+  converged to the same tolerance and therefore produce similar
+  profile for the unknown $u(x)$. A minor discrepancy with the exact
+  solution can also be noticed but it can be reduced with a higher
+  tolerance for convergence.
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{profile.pdf}    
+    \caption{Plot of solution profile in the domain for different
+      solution methods.}
+    \label{fig:profile}
+  \end{figure}
+
+  %plot of u vs. x for 1,2, 3, 4
+
+  \paragraph{d. Relaxation Parameter}
+
+  Several values of the relaxation parameter $\omega$ was tested
+  between 0.4 and 2.0. Figure~\ref{fig:relaxation} shows the plot of the value of
+  the relaxation parameter with the number of SOR iteration took to
+  converge to the specified tolerance. From this plot it can be seen
+  that the optimal value of $\omega$ lies somewhere between in (1.99,
+  2.0). As soon as $\omega$ hits 2.0, the speedup is lost and also SOR
+  becomes unstable.
+
+  % plot of omega vs. niters for sor
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{relaxation_study.pdf}    
+    \caption{Finding optimal relaxation parameter based on
+      experimentation.}
+    \label{fig:relaxation}
+  \end{figure}
+
+  The best perfoming SOR with $\omega=1.99$ is compared with plain
+  Gauss-Jacobi and Gauss-Seidel in Figure~\ref{fig:convergence} in
+  terms of the number of iterations taken to converge to a
+  solution. Gauss Seidel is faster than Gauss Jacobi. SOR is faster
+  than the other two methods.
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{convergence.pdf}    
+    \caption{Convergence of iterative solution methods.}
+    \label{fig:convergence}
+  \end{figure}
+
+  % plot of tol vs. niters for 1, 2, 3
+  
+  In general, the number of iterations are too many for the problem
+  size of $1000\times1000$ for GJ and GS methods and SOR without
+  optimal $\omega$. The reason is that as $h \to 0$ (with refinement
+  of the discretization), the matrix $A$ loses its diagonal
+  dominance. Mathematically,
+  $$ \lim_{h \to 0} 2 + 4h^2 \approx 2 $$ which equals the sum of
+  magnitudes of the non-diagonal entries (-1 and -1 in this case).
+  This can be seen as the reason for poor performance in this test
+  case.  Therefore proper care must be exercised before choosing h and
+  order of discretization of derivatives for the iterative schemes to
+  perform well.
 
 \end{homeworkProblem}
 

@@ -141,7 +141,7 @@ contains
 
     real(dp), allocatable :: D(:,:), L(:,:), U(:,:)
     real(dp), allocatable :: c(:), xnew(:)
-    
+    real(dp):: init_norm
     integer :: nrows, ncols, i, j
 
     nrows = size(A(:,1))
@@ -177,13 +177,12 @@ contains
     
     do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
        
-       ! Gauss Seidel/SOR Iteration
+       !xnew = solve(D, b + matmul(L+U, x))
+       ! Gauss Jacobi
        c = b + matmul(L+U, x)
-
        do i = 1, nrows
           xnew(i) = c(i)/D(i,i)
        end do
-
        !call backsub(D, c, xnew, flag)
        
        ! Compute norms and increment iteration
@@ -1965,8 +1964,8 @@ program test
   print *, "problem5"
   problem5: block
     
-    integer, parameter :: npts = 500
-    real(8), parameter :: max_tol = 1.0d-5
+    integer, parameter :: npts = 1000
+    real(8), parameter :: max_tol = 1.0d-6
     integer, parameter :: max_it  = 100000
 
     real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts)
@@ -1974,11 +1973,10 @@ program test
     real(8) :: tol, omega(20)
     real(8) :: scale = 1.0d0
 
-    print *, 'gauss seidel'    
     call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
     xtmp = solve(A,b)
 
-!!$    x = 0.1d0
+!!$    print *, 'gauss seidel'    
 !!$    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
 !!$    call dseidel(A, b, 1.0d0, max_it, max_tol, x, iter, tol, flag)
 !!$    print *, 'seidel', tol, iter    
@@ -1987,35 +1985,37 @@ program test
 !!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
 !!$    end do
 !!$    close(11)
-    
-    print *, 'SOR'   
-    do j = 1, 19
-       omega(j) = 0.4 + dble(j)/10.0d0
-       call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
-       !x = 0.1d0
-       call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
-       print *, 'sor', omega(j), tol, iter
-           open(11, file='sor.dat')
-    do i = 1, npts
-       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
-    end do
-    close(11)    
-    end do
-    open(11, file='sor.dat')
-    do i = 1, npts
-       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
-    end do
-    close(11)    
 
-    print *, 'gauss jacobi'
     call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
-    call djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
-    print *, 'jacobi', tol, iter    
-    open(11, file='jacobi.dat')
-    do i = 1, npts
-       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+    call dsor(A, b, 1.99d0, max_it, max_tol, x, iter, tol, flag)
+    print *, 'sor', 1.99d0, tol, iter 
+
+    stop
+
+    print *, 'SOR'   
+    do j = 1, 15
+       omega(j) = 1.84d0 + dble(j)/100.0d0
+       print *, omega(j)
+       call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+       call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
+       print *, 'sor', omega(j), tol, iter    
     end do
-    close(11)    
+
+!!$    open(11, file='sor.dat')
+!!$    do i = 1, npts
+!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+!!$    end do
+!!$    close(11)    
+!!$
+!!$    print *, 'gauss jacobi'
+!!$    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+!!$    call djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
+!!$    print *, 'jacobi', tol, iter    
+!!$    open(11, file='jacobi.dat')
+!!$    do i = 1, npts
+!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+!!$    end do
+!!$    close(11)    
 
   end block problem5
 
@@ -2057,7 +2057,7 @@ subroutine assemble_system(a, b, npts, V, rhs, x)
 
   ! Initial solution profile
   do i = 1, npts
-     x(i) = 3.0d0*(dble(i)*h) - 1.0d0
+     x(i) = - 1.0d0 + 2.75d0*(dble(i)*h)
   end do
 
 end subroutine assemble_system
