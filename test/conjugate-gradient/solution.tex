@@ -1,0 +1,282 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{fancyhdr}
+\usepackage{extramarks}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage[plain]{algorithm}
+\usepackage{algpseudocode}
+\usepackage{fancyvrb}
+\usetikzlibrary{automata,positioning}
+
+%
+% Basic Document Settings
+%
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+\linespread{1.1}
+
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName}
+\chead{\hmwkClass\ : \hmwkTitle}
+\rhead{\firstxmark}
+\lfoot{\lastxmark}
+\cfoot{\thepage}
+
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+\setlength\parindent{0pt}
+
+%
+% Create Problem Sections
+%
+
+\newcommand{\enterProblemHeader}[1]{
+    \nobreak\extramarks{}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+}
+
+\newcommand{\exitProblemHeader}[1]{
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \stepcounter{#1}
+    \nobreak\extramarks{Problem \arabic{#1}}{}\nobreak{}
+}
+
+\setcounter{secnumdepth}{0}
+\newcounter{partCounter}
+\newcounter{homeworkProblemCounter}
+\setcounter{homeworkProblemCounter}{1}
+\nobreak\extramarks{Problem \arabic{homeworkProblemCounter}}{}\nobreak{}
+
+%
+% Homework Problem Environment
+%
+% This environment takes an optional argument. When given, it will adjust the
+% problem counter. This is useful for when the problems given for your
+% assignment aren't sequential. See the last 3 problems of this template for an
+% example.
+%
+\newenvironment{homeworkProblem}[1][-1]{
+    \ifnum#1>0
+        \setcounter{homeworkProblemCounter}{#1}
+    \fi
+    \section{Problem \arabic{homeworkProblemCounter}}
+    \setcounter{partCounter}{1}
+    \enterProblemHeader{homeworkProblemCounter}
+}{
+    \exitProblemHeader{homeworkProblemCounter}
+}
+
+%
+% Homework Details
+%   - Title
+%   - Due date
+%   - Class
+%   - Section/Time
+%   - Instructor
+%   - Author
+%
+
+\newcommand{\hmwkTitle}{Homework\ \#2}
+\newcommand{\hmwkDueDate}{\today}
+\newcommand{\hmwkClass}{MATH6644 Iterative Methods}
+\newcommand{\hmwkClassTime}{}
+\newcommand{\hmwkClassInstructor}{}
+\newcommand{\hmwkAuthorName}{Komahan Boopathy}
+
+%
+% Title Page
+%
+
+\title{
+    \vspace{2in}
+    \textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\
+    \normalsize\vspace{0.1in}\small{\hmwkDueDate}\\
+    %\vspace{0.1in}\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+    \vspace{3in}
+}
+
+\author{\textbf{\Large\hmwkAuthorName}}
+\date{}
+
+\renewcommand{\part}[1]{\textbf{\large Part \Alph{partCounter}}\stepcounter{partCounter}\\}
+
+%
+% Various Helper Commands
+%
+
+% Useful for algorithms
+\newcommand{\alg}[1]{\textsc{\bfseries \footnotesize #1}}
+
+% For derivatives
+\newcommand{\deriv}[1]{\frac{\mathrm{d}}{\mathrm{d}x} (#1)}
+
+% For partial derivatives
+\newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}}
+
+% Integral dx
+\newcommand{\dx}{\mathrm{d}x}
+
+% Alias for the Solution section header
+\newcommand{\solution}{\textbf{\large Solution}}
+
+% Probability commands: Expectation, Variance, Covariance, Bias
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Bias}{\mathrm{Bias}}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\pagebreak
+
+\begin{homeworkProblem}
+Consider a matrix
+$$A = 
+\begin{bmatrix}
+  6 & -1 & 0 \\ -1 & 5 & 0 \\ 0 & 0 & 2 \\
+\end{bmatrix}$$
+
+\paragraph{a.} \emph{Show that A is positive definite.}
+\medskip
+
+The eigenvalues of the matrix $A$ is found using $|A-\lambda
+I|=0$. The characterisitic polynomial is $(\lambda^2 -11\lambda +
+29)(\lambda-2)=0$. The eigenvalues are $\lambda=2,
+\frac{11-\sqrt{5}}{2}, \frac{11+\sqrt{5}}{2}$, all of which are real
+(due to symmetry of $A$) and greater than zero (due to positive
+definiteness of $A$).
+
+\paragraph{b.} \emph{Calculate the A-norm of the vector.}
+$$ \mathbf{b} = 
+\begin{bmatrix}
+  1 \\ 2 \\ -1
+\end{bmatrix} $$
+\medskip
+The A-norm of vector $||b||_{A} = \sqrt{(b, Ab)}$. We find
+$$ \mathbf{c} = \mathbf{Ab} = 
+\begin{bmatrix}
+  6 & -1 & 0 \\
+ -1 &  5 & 0 \\
+  0 &  0 & 2 \\
+\end{bmatrix} 
+\begin{bmatrix}
+  1 \\ 2 \\ -1
+\end{bmatrix} =
+\begin{bmatrix}
+  4 \\ 9 \\ -2
+\end{bmatrix}
+$$
+The A-norm of vector $b$ is therefore $\sqrt{(b,c)}=4.899$
+
+\paragraph{c.} \emph{Find a vector that is a orthogonal to $\mathbf{b}$.}
+
+This means that we need to find a vector $d$ that such that $(b, Ab) =
+(b, c) = 0$.  We are essentially finding a conjugate vector to $b$. We
+can use Gram-Schmidt orthogonalization to get that vector $d$ that is
+orthogonal to $c$ as follows:
+
+\end{homeworkProblem}
+
+\clearpage
+\begin{homeworkProblem}
+ Assume that $A$ is a $n\times n$ symmetric positive definite
+  matrix. If $\kappa(A) = {\cal{O}}(n)$, give a rough estimate of the
+  number of steepest descent iterations required to reduce the error
+  in $A-norm$ to ${\cal{O}}(1/n)$.
+  \medskip
+\end{homeworkProblem}
+
+\clearpage
+\begin{homeworkProblem}
+\emph{Assume that $A$ is a $n\times n$ symmetric positive definite
+  matrix with eigenvalues in the intervals $(1, 1.1) \cup (10,10.2)$.
+  Assume that the cost of a matrix vector multiplication is about $4n$ floating point
+  multiplications. Estimate the number of floating point opearations reduce the 
+  $A-$norm of the error  by a factor of $10^{-3}$ using CG iterations. }
+  \medskip
+\end{homeworkProblem}
+
+\clearpage
+\begin{homeworkProblem}
+
+\emph{Discretize the following differential equation}
+$$ -u^{\prime\prime} = f(x) = 2x -\frac{1}{2}$$
+$$ u(x=0) = 1, u^\prime(x=1) = 0, x \in [0,1]$$ \emph{by the central
+  difference scheme with $n$ interior mesh points. Solve the
+  resulting linear system by Conjugate Gradient (CG), Preconditioned
+  CG with Sine transform $([S]_{j,k} = \sqrt{\frac{2}{n+1}}\sin(\frac{\pi j k
+  }{n+1}) \forall 1 \le j,k \le n$) to construct the
+  preconditioner. Run your code with $n = 64, 128, 256, 512, 1024,
+  \ldots$.  Compare the iteration numbers used for each case in a
+  table. Discuss your own results.}
+
+  \paragraph{a. Discretization of ODE and Linear System}
+  \medskip
+
+  The discretized ODE is $ - u_{i+1} +2 u_i - u_{i-1} =
+  h^2f(x_i).$
+
+We impose a Neumann boundary condition that the unknown itself is not
+given at the right boundary so we have to solve for it. This means
+that our unknowns are not just at the interior points but also at any
+point where a Neumann condition is specified. For the sake of
+generality, also the Dirichlet condition is achieved
+indirectly by including it in the linear system. Therefore, the size
+of the linear system is $m=n+2$, where $m$ is the total number of
+points and $n$ is the number of interior points.  The resulting linear
+system is
+ $$ \begin{bmatrix}
+ 1 &  0 &  0  &  0 & 0 & 0 \\
+ -1 & 2 & -1  &  0 & 0 & 0\\
+ 0 &-1 & 2 & -1  &  0 & 0 \\
+0& 0&  \ddots & \ddots & \ddots & 0 \\
+0 &0 & 0 & -1 &  2  & -1  \\ 
+0 &0 &  0 &  0 &  -1 & 1  \\  
+ \end{bmatrix}
+\begin{bmatrix}
+   u(x_1) \\
+    u(x_2) \\
+    u(x_3) \\
+    \vdots\\
+    u(x_{m-1}) \\
+    u(x_m) \\
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1 \\
+    h^2f(x_2) \\
+    h^2f(x_3) \\
+    \vdots\\
+    h^2f(x_{m-1}) \\
+    0 \\
+  \end{bmatrix}$$
+This is a banded tri-diagonal system.
+
+
+
+\end{homeworkProblem}
+
+
+\end{document}
+
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{profile.pdf}    
+    \caption{Plot of solution profile in the domain for different
+      solution methods.}
+    \label{fig:profile}
+  \end{figure}
