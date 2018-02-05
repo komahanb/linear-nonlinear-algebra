@@ -23,8 +23,13 @@ module linear_algebra
   public :: det, eye, diag, trace, triu       !, tril ! matrix utils
   public :: assert, stop_error                ! misc
 
-  ! Iterative solvers
-  public :: dsor, djacobi, dseidel, fwdsub, backsub
+  public :: fwdsub, backsub
+
+  ! Classical Iterative solvers
+  public :: dsor, djacobi, dseidel
+
+  ! Sophisticated Iterative solvers
+  public :: dconjugate_gradient
 
   ! Module parameters  
   complex(dp), parameter :: i_ = (0, 1)
@@ -126,7 +131,29 @@ module linear_algebra
   end interface assert_shape
 
 contains
-  
+
+  !-------------------------------------------------------------------!
+  ! Solve the linear system using conjugate gradient method
+  !-------------------------------------------------------------------!
+
+  subroutine dconjugate_gradient(A, b, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: b(:)
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+  end subroutine dconjugate_gradient
+
+  !-------------------------------------------------------------------!
+  ! Solve the linear system using classical Jacobi iterations
+  !-------------------------------------------------------------------!
+ 
   subroutine djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
 
     real(dp), intent(in) :: A(:,:)
