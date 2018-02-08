@@ -135,7 +135,7 @@ contains
   !-------------------------------------------------------------------!
   ! Solve the linear system using conjugate gradient method
   !-------------------------------------------------------------------!
-
+  
   subroutine dconjugate_gradient(A, b, max_it, max_tol, x, iter, tol, flag)
 
     real(dp), intent(in) :: A(:,:)
@@ -147,6 +147,75 @@ contains
     integer , intent(out)   :: iter
     real(dp), intent(out)   :: tol
     integer , intent(out)   :: flag
+
+    ! create local data
+    real(dp), allocatable :: p(:), r(:), w(:)
+    real(dp), allocatable :: rho(:)
+    real(dp) :: alpha, beta
+    real(dp) :: bnorm, rnorm
+
+    ! Memory allocations
+    allocate(r, p, w, mold=x)
+    allocate(rho(max_it))
+
+    ! Start the iteration counter
+    iter = 1
+
+    ! Norm of the right hand side
+    bnorm = norm2(b)
+
+    ! Norm of the initial residual
+    r         = b - matmul(A, x)
+    rnorm     = norm2(r)
+    tol       = rnorm/bnorm
+    rho(iter) = rnorm*rnorm
+
+    open(10, file='conjugate_gradient.log', action='write', position='append')
+
+    ! Apply Iterative scheme until tolerance is achieved
+    do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
+
+       ! step (a) compute the descent direction
+       if ( iter .eq. 1) then
+          ! steepest descent direction p
+          p = r
+       else
+          ! take a conjugate direction
+          beta = rho(iter)/rho(iter-1)
+          p = r + beta*p
+       end if
+
+       ! step (b) compute the solution update
+       w = matmul(A,p)
+
+       ! step (c) compute the step size for update
+       alpha = rho(iter)/dot_product(p, w)
+
+       ! step (d) Add dx to the old solution
+       x = x + alpha*p
+
+       ! step (e) compute the new residual
+       r = r - alpha*w
+       !r = b - matmul(A, x)
+
+       ! step(f) update values before next iteration
+       rnorm = norm2(r)
+       tol = rnorm/bnorm
+
+       write(10,*) iter, tol
+       print *, iter, tol
+
+       iter = iter + 1
+
+       rho(iter) = rnorm*rnorm
+
+    end do
+
+    close(10)
+
+    deallocate(r, p, w, rho)
+
+    flag = 0
 
   end subroutine dconjugate_gradient
 
@@ -1903,14 +1972,14 @@ end module linear_algebra
 
 subroutine check_conjugate
 
-use linear_algebra
- 
-implicit none
+  use linear_algebra
 
-  print *, "set 2"
+  implicit none
+
+  print *, "conjugate gradients"
   problem4: block
-    
-    integer, parameter :: npts = 1000
+
+    integer, parameter :: npts = 99
     real(8), parameter :: max_tol = 1.0d-6
     integer, parameter :: max_it  = 100000
 
@@ -1919,53 +1988,17 @@ implicit none
     real(8) :: tol, omega(20)
     real(8) :: scale = 1.0d0
 
-    call assemble_system2(0.0d0, 1.0d0, npts-2, A, b, x)
+    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
     xtmp = solve(A,b)
 
-!!$    print *, 'gauss seidel'    
-!!$    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
-!!$    call dseidel(A, b, 1.0d0, max_it, max_tol, x, iter, tol, flag)
-!!$    print *, 'seidel', tol, iter    
-!!$    open(11, file='seidel.dat')
-!!$    do i = 1, npts
-!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
-!!$    end do
-!!$    close(11)
-
-    call assemble_system2(0.0d0, 1.0d0, npts-2, A, b, x)
-    call dsor(A, b, 1.99d0, max_it, max_tol, x, iter, tol, flag)
-    print *, 'sor', 1.99d0, tol, iter 
-    open(11, file='check.dat')
+    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
+    call dconjugate_gradient(A, b, max_it, max_tol, x, iter, tol, flag)
+    print *, 'cg', tol, iter 
+    open(11, file='checkcg.dat')
     do i = 1, npts
        write(11, *) dble(i-1)/dble(npts), x(i), xtmp(i)
     end do
     close(11)
-    stop
-
-    print *, 'SOR'   
-    do j = 1, 15
-       omega(j) = 1.84d0 + dble(j)/100.0d0
-       print *, omega(j)
-       call assemble_system2(0.0d0, 1.0d0, npts, A, b, x)
-       call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
-       print *, 'sor', omega(j), tol, iter    
-    end do
-
-!!$    open(11, file='sor.dat')
-!!$    do i = 1, npts
-!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
-!!$    end do
-!!$    close(11)    
-!!$
-!!$    print *, 'gauss jacobi'
-!!$    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
-!!$    call djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
-!!$    print *, 'jacobi', tol, iter    
-!!$    open(11, file='jacobi.dat')
-!!$    do i = 1, npts
-!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
-!!$    end do
-!!$    close(11)    
 
   end block problem4
 
@@ -2061,7 +2094,7 @@ subroutine check_classical
 
   print *, "problem5"
   problem5: block
-    
+
     integer, parameter :: npts = 1000
     real(8), parameter :: max_tol = 1.0d-6
     integer, parameter :: max_it  = 100000
@@ -2071,7 +2104,7 @@ subroutine check_classical
     real(8) :: tol, omega(20)
     real(8) :: scale = 1.0d0
 
-    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
+    call assemble_system2(0.0d0, 1.0d0, npts-2, A, b, x)
     xtmp = solve(A,b)
 
 !!$    print *, 'gauss seidel'    
@@ -2084,7 +2117,7 @@ subroutine check_classical
 !!$    end do
 !!$    close(11)
 
-    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
+    call assemble_system2(0.0d0, 1.0d0, npts-2, A, b, x)
     call dsor(A, b, 1.99d0, max_it, max_tol, x, iter, tol, flag)
     print *, 'sor', 1.99d0, tol, iter 
     open(11, file='check.dat')
@@ -2208,7 +2241,7 @@ subroutine assemble_system2(a, b, npts, V, rhs, x)
      rhs(i) = h*h*(2.0d0*dble(i-1)*h - 0.5d0)
   end do
   rhs(npts+2) = 0.0d0
-!  rhs(2) = rhs(2) + 1.0d0
+  rhs(2) = rhs(2) + 1.0d0
 
   ! Initial solution profile
   x = 1.0d0
