@@ -1901,11 +1901,82 @@ contains
  
 end module linear_algebra
 
-program test
+subroutine check_conjugate
+
+use linear_algebra
+ 
+implicit none
+
+  print *, "set 2"
+  problem4: block
+    
+    integer, parameter :: npts = 1000
+    real(8), parameter :: max_tol = 1.0d-6
+    integer, parameter :: max_it  = 100000
+
+    real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts)
+    integer :: iter, flag, i, j
+    real(8) :: tol, omega(20)
+    real(8) :: scale = 1.0d0
+
+    call assemble_system2(0.0d0, 1.0d0, npts-2, A, b, x)
+    xtmp = solve(A,b)
+
+!!$    print *, 'gauss seidel'    
+!!$    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+!!$    call dseidel(A, b, 1.0d0, max_it, max_tol, x, iter, tol, flag)
+!!$    print *, 'seidel', tol, iter    
+!!$    open(11, file='seidel.dat')
+!!$    do i = 1, npts
+!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+!!$    end do
+!!$    close(11)
+
+    call assemble_system2(0.0d0, 1.0d0, npts-2, A, b, x)
+    call dsor(A, b, 1.99d0, max_it, max_tol, x, iter, tol, flag)
+    print *, 'sor', 1.99d0, tol, iter 
+    open(11, file='check.dat')
+    do i = 1, npts
+       write(11, *) dble(i-1)/dble(npts), x(i), xtmp(i)
+    end do
+    close(11)
+    stop
+
+    print *, 'SOR'   
+    do j = 1, 15
+       omega(j) = 1.84d0 + dble(j)/100.0d0
+       print *, omega(j)
+       call assemble_system2(0.0d0, 1.0d0, npts, A, b, x)
+       call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
+       print *, 'sor', omega(j), tol, iter    
+    end do
+
+!!$    open(11, file='sor.dat')
+!!$    do i = 1, npts
+!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+!!$    end do
+!!$    close(11)    
+!!$
+!!$    print *, 'gauss jacobi'
+!!$    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
+!!$    call djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
+!!$    print *, 'jacobi', tol, iter    
+!!$    open(11, file='jacobi.dat')
+!!$    do i = 1, npts
+!!$       write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
+!!$    end do
+!!$    close(11)    
+
+  end block problem4
+
+end subroutine check_conjugate
+
+subroutine check_classical
 
   use linear_algebra
 
   implicit none  
+
 !!$
 !!$  test_sub : block
 !!$    
@@ -2000,7 +2071,7 @@ program test
     real(8) :: tol, omega(20)
     real(8) :: scale = 1.0d0
 
-    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
     xtmp = solve(A,b)
 
 !!$    print *, 'gauss seidel'    
@@ -2013,17 +2084,21 @@ program test
 !!$    end do
 !!$    close(11)
 
-    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
     call dsor(A, b, 1.99d0, max_it, max_tol, x, iter, tol, flag)
     print *, 'sor', 1.99d0, tol, iter 
-
+    open(11, file='check.dat')
+    do i = 1, npts
+       write(11, *) dble(i-1)/dble(npts), x(i), xtmp(i)
+    end do
+    close(11)
     stop
 
     print *, 'SOR'   
     do j = 1, 15
        omega(j) = 1.84d0 + dble(j)/100.0d0
        print *, omega(j)
-       call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+       call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
        call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
        print *, 'sor', omega(j), tol, iter    
     end do
@@ -2035,7 +2110,7 @@ program test
 !!$    close(11)    
 !!$
 !!$    print *, 'gauss jacobi'
-!!$    call assemble_system(0.0d0, 1.0d0, npts, A, b, x)
+!!$    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
 !!$    call djacobi(A, b, max_it, max_tol, x, iter, tol, flag)
 !!$    print *, 'jacobi', tol, iter    
 !!$    open(11, file='jacobi.dat')
@@ -2046,9 +2121,9 @@ program test
 
   end block problem5
 
-end program test
+end subroutine check_classical
 
-subroutine assemble_system(a, b, npts, V, rhs, x)
+subroutine assemble_system1(a, b, npts, V, rhs, x)
 
   real(8), intent(in)  :: a, b ! bound of domain
   integer              :: npts ! number of points
@@ -2087,4 +2162,60 @@ subroutine assemble_system(a, b, npts, V, rhs, x)
      x(i) = - 1.0d0 + 2.75d0*(dble(i)*h)
   end do
 
-end subroutine assemble_system
+end subroutine assemble_system1
+
+subroutine assemble_system2(a, b, npts, V, rhs, x)
+
+  real(8), intent(in)  :: a, b             ! bound of domain
+  integer              :: npts             ! number of interior points
+  real(8), intent(out) :: V(npts+2,npts+2) ! banded matrix
+  real(8), intent(out) :: rhs(npts+2)
+  real(8), intent(out) :: x(npts+2)
+  integer              :: i, j
+  real(8) :: h
+
+  h = (b-a)/dble(npts+1)
+  V = 0.0d0
+
+  ! Set the inner block
+  do j = 2, npts + 1
+     do i = 2, npts + 1
+        if (i .eq. j-1) then
+           ! lower triangle
+           V(i,j) = -1.0d0
+        else if (i .eq. j+1) then           
+           ! upper triangle
+           V(i,j) = -1.0d0
+        else if (i .eq. j) then           
+           ! diagonal
+           V(i,i) = 2.0d0
+        else
+           ! skip
+        end if
+     end do
+  end do
+
+  ! Set the first and last rows
+  V(1,1) = 1.0d0
+  V(2,1) = 0.0d0
+  V(npts+2, npts+2) = 1.0d0
+  V(npts+2, npts+1) = -1.0d0
+  
+
+  ! Assemble the RHS
+  rhs(1) = 1.0d0
+  do i = 2, npts + 1
+     rhs(i) = h*h*(2.0d0*dble(i-1)*h - 0.5d0)
+  end do
+  rhs(npts+2) = 0.0d0
+!  rhs(2) = rhs(2) + 1.0d0
+
+  ! Initial solution profile
+  x = 1.0d0
+
+end subroutine assemble_system2
+
+program test
+  !call check_classical
+  call check_conjugate
+end program test
