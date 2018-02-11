@@ -1,3 +1,5 @@
+https://www.traviscistatus.com/[![Build Status](https://travis-ci.org/komahanb/iterative-algebra.svg?branch=master)](https://travis-ci.org/komahanb/iterative-algebra)
+
 # Iterative Methods -- A Fortran-Python library for linear and nonlinear algebra
 
 # How to install library?
