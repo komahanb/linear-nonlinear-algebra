@@ -20,7 +20,10 @@ git:
 addons:
   apt:
     sources: ubuntu-toolchain-r-test
-    packages: gfortran-7 lapack
+    packages:
+      - gfortran-7
+      - libblas-dev
+      - liblapack-dev
 
 before_install:
   - sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-7 50
