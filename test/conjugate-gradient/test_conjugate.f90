@@ -1,5 +1,5 @@
 program test  
-  call check_conjugate  
+  !call check_conjugate  
 end program test
 
 subroutine check_conjugate
