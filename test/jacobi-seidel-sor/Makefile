@@ -1,4 +1,6 @@
-include ../Makefile.in
+include ../../Makefile.in
+
+program = run
 
 #=====================================================================#
 # Object Files
@@ -6,28 +8,28 @@ include ../Makefile.in
 
 include OBJECTS
 
+# Algebra
+F90FLAGS += -I../../lib/
+LDFLAGS += -L../../lib/ ../../lib/libalgebra.a -llapack
+
 #=====================================================================#
-# Library
+# Targets
 #=====================================================================#
 
-default: $(objects) 
-	ar rvs libalgebra.a $(objects)
-	@echo "----------- libalgebra.a created -----------"
+all: $(program)
 
-install:
-	mv *.o ../lib
-	mv *.a ../lib
-	mv *.mod ../lib
+$(program): $(objects)
+	$(F90) $(objects) -o $@ $(LDFLAGS)
 
 clean:
-	@rm -f *.o *.mod *.so *.a
+	@rm -f *.o *.mod *.so $(program)
 
 #=====================================================================#
 # Rule
 #=====================================================================#
 
 .SUFFIXES: .f90 .o
-.PHONY: all clean 
+.PHONY: all clean
 
 %.o: %.f90
 	$(F90) $(F90FLAGS) -c $<

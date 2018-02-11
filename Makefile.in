@@ -2,16 +2,21 @@
 # User Options
 #=====================================================================#
 
+# general
 COMPILER = gnu
-DEBUG    = yes
+F2008    = yes
+COMPLEX  = no
+
+# optimization level
+DEBUG    = no	
 PROFILE  = no
-OPTIMIZE = no
+OPTIMIZE = yes
+
+# libraries
+LAPACK   = yes
 MPI      = no
 HDF5     = no
 PETSC    = no
-F2008    = yes
-LAPACK   = yes
-COMPLEX  = no
 
 #=====================================================================#
 # External Library Paths
@@ -33,7 +38,7 @@ LAPACK_DIR = /usr
 #=====================================================================#
 
 ifeq ($(COMPILER),gnu)
-  F90 = gfortran-6
+  F90 = gfortran-7
   F90FLAGS := -cpp -fbacktrace
 
   # COMPLEX mode
@@ -103,14 +108,12 @@ ifeq ($(LAPACK),yes)
 endif
 
 # MPI for distributed-memory parallelism
-
 ifeq ($(MPI),yes)
   F90 = mpif90
   F90FLAGS += -DMPI
 endif
 
 # HDF5 for I/O
-
 ifeq ($(HDF5),yes)
   F90FLAGS += -DHDF5 -I$(HDF5_DIR)/include
   LDFLAGS += -L$(HDF5_DIR)/lib $(HDF5_DIR)/lib/libhdf5hl_fortran.a \
