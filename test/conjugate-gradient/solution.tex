@@ -295,38 +295,40 @@ $$ This is the theoretical lower bound for the number of steepest
 
 \emph{Discretize the following differential equation}
 $$ -u^{\prime\prime} = f(x) = 2x -\frac{1}{2}$$
-$$ u(x=0) = 1, u^\prime(x=1) = 0, x \in [0,1]$$ \emph{by the central
-  difference scheme with $n$ interior mesh points. Solve the
-  resulting linear system by Conjugate Gradient (CG), Preconditioned
-  CG with Sine transform $([S]_{j,k} = \sqrt{\frac{2}{n+1}}\sin(\frac{\pi j k
-  }{n+1}) \forall 1 \le j,k \le n$) to construct the
-  preconditioner. Run your code with $n = 64, 128, 256, 512, 1024,
-  \ldots$.  Compare the iteration numbers used for each case in a
-  table. Discuss your own results.}
+$$ u(0) = 1, u^\prime(1) = 0~(case~a),$$ 
+$$u(0) = 1, u(1) = 0~(case~b)$$ 
+$$x \in [0,1]$$ 
 
-  \paragraph{a. Discretization of ODE and Linear System}
+\emph{by the central difference scheme with $n$ interior mesh
+  points. Solve the resulting linear system by Conjugate Gradient
+  (CG), Preconditioned CG with Sine transform $[S]_{j,k} =
+  \sqrt{\frac{2}{n+1}}\sin\left(\frac{\pi j k }{n+1}\right)  \quad \forall \quad 1 \le j,k \le
+  n$ to construct the preconditioner. Run your code with $n = 64,
+  128, 256, 512, 1024, \ldots$.  Compare the iteration numbers used
+  for each case in a table. Discuss your own results.}
+
+  \paragraph{(a) Dirichlet and Neumann BC:}
+
   \medskip
 
-  The discretized ODE is $ - u_{i+1} +2 u_i - u_{i-1} =
-  h^2f(x_i).$
-
-We impose a Neumann boundary condition that the unknown itself is not
-given at the right boundary so we have to solve for it. This means
-that our unknowns are not just at the interior points but also at any
-point where a Neumann condition is specified. Therefore, the size
-of the linear system is $m=n+1$, where $m$ is the total number of
-points and $n$ is the number of interior points.  The resulting linear
-system is
- $$ \begin{bmatrix} 
-% 1 &  0 &  0  &  0 & 0 & 0 \\
- -1 & 2 & -1  &  0 & 0 & 0\\
- 0 &-1 & 2 & -1  &  0 & 0 \\
- 0 & 0 & \ddots & \ddots & \ddots & 0 \\
- 0 & 0 & 0 & -1 & 2 & -1 \\ 
- 0 & 0 & 0 &  0 & -1 & 1 \\  
- \end{bmatrix}
-\begin{bmatrix}
- %  u(x_1) \\
+  The discretized ODE is $ - u_{i+1} +2 u_i - u_{i-1} = h^2f(x_i).$ We
+  impose a Neumann boundary condition that the unknown itself is not
+  given at the right boundary so we have to solve for it. This means
+  that our unknowns are not just at the interior points but also at
+  any point where a Neumann condition is specified. Therefore, the
+  size of the linear system is $m=n+1$, where $m$ is the total number
+  of points and $n$ is the number of interior points.  The resulting
+  linear system is
+  $$ \begin{bmatrix} 
+    % 1 &  0 &  0  &  0 & 0 & 0 \\
+    -1 & 2 & -1  &  0 & 0 & 0\\
+    0 &-1 & 2 & -1  &  0 & 0 \\
+    0 & 0 & \ddots & \ddots & \ddots & 0 \\
+    0 & 0 & 0 & -1 & 2 & -1 \\ 
+    0 & 0 & 0 &  0 & -1 & 1 \\  
+  \end{bmatrix}
+  \begin{bmatrix}
+    %  u(x_1) \\
     u(x_2) \\
     u(x_3) \\
     \vdots\\
@@ -336,13 +338,12 @@ system is
   =
   \begin{bmatrix}
     %1 \\
-   1 +  h^2f(x_2) \\
+    1 +  h^2f(x_2) \\
     h^2f(x_3) \\
     \vdots\\
     h^2f(x_{n}) \\
     0 \\
   \end{bmatrix}$$
-This is a banded tri-diagonal system.
 
 \end{homeworkProblem}
 

@@ -29,7 +29,7 @@ module linear_algebra
   public :: dsor, djacobi, dseidel
 
   ! Sophisticated Iterative solvers
-  public :: dconjugate_gradient
+  public :: dcg, dpcg, dsd
 
   ! Module parameters  
   complex(dp), parameter :: i_ = (0, 1)
@@ -136,7 +136,7 @@ contains
   ! Solve the linear system using conjugate gradient method
   !-------------------------------------------------------------------!
   
-  subroutine dconjugate_gradient(A, b, max_it, max_tol, x, iter, tol, flag)
+  subroutine dcg(A, b, max_it, max_tol, x, iter, tol, flag)
 
     real(dp), intent(in) :: A(:,:)
     real(dp), intent(in) :: b(:)
@@ -170,7 +170,7 @@ contains
     tol       = rnorm/bnorm
     rho(iter) = rnorm*rnorm
 
-    open(10, file='conjugate_gradient.log', action='write', position='append')
+    open(10, file='cg.log', action='write', position='append')
 
     ! Apply Iterative scheme until tolerance is achieved
     do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
@@ -217,7 +217,181 @@ contains
 
     flag = 0
 
-  end subroutine dconjugate_gradient
+  end subroutine dcg
+
+  !-------------------------------------------------------------------!
+  ! Solve the linear system using preconditioned conjugate gradient
+  ! method
+  !-------------------------------------------------------------------!
+  
+  subroutine dpcg(A, M, b, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: M(:,:)
+    real(dp), intent(in) :: b(:)
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+    ! create local data
+    real(dp), allocatable :: p(:), r(:), w(:), z(:)
+    real(dp), allocatable :: rho(:), tau(:)
+    real(dp) :: alpha, beta
+    real(dp) :: bnorm, rnorm
+
+    ! Memory allocations
+    allocate(r, p, w, z, mold=x)
+    allocate(rho(max_it))
+    allocate(tau(max_it))
+
+    ! Start the iteration counter
+    iter = 1
+
+    ! Norm of the right hand side
+    bnorm = norm2(b)
+
+    ! Norm of the initial residual
+    r         = b - matmul(A, x)
+    rnorm     = norm2(r)
+    tol       = rnorm/bnorm
+    rho(iter) = rnorm*rnorm
+
+    open(10, file='pcg.log', action='write', position='append')
+
+    ! Apply Iterative scheme until tolerance is achieved
+    do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
+       ! step (a)
+       z = matmul(M,r)
+
+       ! step (b)
+       tau(iter) = dot_product(z,r)
+
+       ! step (c) compute the descent direction
+       if ( iter .eq. 1) then
+          ! steepest descent direction p
+          beta = 0.0d0
+          p = z
+       else
+          ! take a conjugate direction
+          beta = tau(iter)/tau(iter-1)
+          p = z + beta*p
+       end if
+
+       ! step (b) compute the solution update
+       w = matmul(A,p)
+
+       ! step (c) compute the step size for update
+       alpha = tau(iter)/dot_product(p, w)
+
+       ! step (d) Add dx to the old solution
+       x = x + alpha*p
+
+       ! step (e) compute the new residual
+       r = r - alpha*w
+       !r = b - matmul(A, x)
+
+       ! step(f) update values before next iteration
+       rnorm = norm2(r)
+       tol = rnorm/bnorm
+
+       write(10,*) iter, tol
+       print *, iter, tol
+
+       iter = iter + 1
+
+       rho(iter) = rnorm*rnorm
+
+    end do
+
+    close(10)
+
+    deallocate(r, p, w, rho, tau)
+
+    flag = 0
+
+  end subroutine dpcg
+
+
+  !-------------------------------------------------------------------!
+  ! Solve the linear system using conjugate gradient method
+  !-------------------------------------------------------------------!
+  
+  subroutine dsd(A, b, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: b(:)
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+    ! create local data
+    real(dp), allocatable :: r(:), w(:)
+    real(dp), allocatable :: rho(:)
+    real(dp) :: alpha, beta
+    real(dp) :: bnorm, rnorm
+
+    ! Memory allocations
+    allocate(r, w, mold=x)
+    allocate(rho(max_it))
+
+    ! Start the iteration counter
+    iter = 1
+
+    ! Norm of the right hand side
+    bnorm = norm2(b)
+
+    ! Norm of the initial residual
+    r         = b - matmul(A, x)
+    rnorm     = norm2(r)
+    tol       = rnorm/bnorm
+    rho(iter) = rnorm*rnorm
+
+    open(10, file='sd.log', action='write', position='append')
+
+    ! Apply Iterative scheme until tolerance is achieved
+    do while ((tol .gt. max_tol) .and. (iter .lt. max_it))
+
+       ! step (b) compute the solution update
+       w = matmul(A,r)
+
+       ! step (c) compute the step size for update using A-norm of the residual
+       alpha = rho(iter)/dot_product(r, w)
+
+       ! step (d) Add dx to the old solution
+       x = x + alpha*w
+
+       ! step (e) compute the new residual
+       r = r - alpha*w
+       !r = b - matmul(A, x)
+
+       ! step(f) update values before next iteration
+       rnorm = norm2(r)
+       tol = rnorm/bnorm
+
+       write(10,*) iter, tol
+       print *, iter, tol
+
+       iter = iter + 1
+
+       rho(iter) = rnorm*rnorm
+
+    end do
+
+    close(10)
+
+    deallocate(r, w, rho)
+
+    flag = 0
+
+  end subroutine dsd
 
   !-------------------------------------------------------------------!
   ! Solve the linear system using classical Jacobi iterations
@@ -1979,21 +2153,26 @@ subroutine check_conjugate
   print *, "conjugate gradients"
   problem4: block
 
-    integer, parameter :: npts = 99
-    real(8), parameter :: max_tol = 1.0d-6
+    integer, parameter :: npts = 1000
+    real(8), parameter :: max_tol = 1.0d-3
     integer, parameter :: max_it  = 100000
 
-    real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts)
+    real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts), P(npts, npts)
     integer :: iter, flag, i, j
     real(8) :: tol, omega(20)
     real(8) :: scale = 1.0d0
 
-    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
-    xtmp = solve(A,b)
+    !call assemble_system1(0.0d0, 1.0d0, npts, A, b, x, P)
+    !xtmp = solve(A,b)
 
-    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
-    call dconjugate_gradient(A, b, max_it, max_tol, x, iter, tol, flag)
-    print *, 'cg', tol, iter 
+    call assemble_system1(0.0d0, 1.0d0, npts, A, b, x, P)
+
+    !call dcg(A, b, max_it, max_tol, x, iter, tol, flag)    
+    !call dsd(A, b, max_it, max_tol, x, iter, tol, flag)    
+    call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
+
+    print *, 'sd', tol, iter 
+
     open(11, file='checkcg.dat')
     do i = 1, npts
        write(11, *) dble(i-1)/dble(npts), x(i), xtmp(i)
@@ -2131,7 +2310,7 @@ subroutine check_classical
     do j = 1, 15
        omega(j) = 1.84d0 + dble(j)/100.0d0
        print *, omega(j)
-       call assemble_system1(0.0d0, 1.0d0, npts, A, b, x)
+       call assemble_system2(0.0d0, 1.0d0, npts, A, b, x)
        call dsor(A, b, omega(j), max_it, max_tol, x, iter, tol, flag)
        print *, 'sor', omega(j), tol, iter    
     end do
@@ -2156,15 +2335,20 @@ subroutine check_classical
 
 end subroutine check_classical
 
-subroutine assemble_system1(a, b, npts, V, rhs, x)
+subroutine assemble_system1(a, b, npts, V, rhs, x, P)
+
+  use linear_algebra, only : inv
 
   real(8), intent(in)  :: a, b ! bound of domain
   integer              :: npts ! number of points
   real(8), intent(out) :: V(npts,npts)
+
   real(8), intent(out) :: rhs(npts)
   real(8), intent(out) :: x(npts)
   integer              :: m, n, i, j
-  real(8) :: h
+  real(8) :: h, alpha
+  real(8), intent(out) :: P(npts,npts)
+  real(8), parameter :: PI = 3.141592653589793d0
 
   h = (b-a)/dble(npts+1)
   V = 0.0d0
@@ -2195,24 +2379,33 @@ subroutine assemble_system1(a, b, npts, V, rhs, x)
      x(i) = - 1.0d0 + 2.75d0*(dble(i)*h)
   end do
 
+  ! Set a preconditioner
+  !P = inv(V)
+  alpha = sqrt(2.0d0/dble(npts+1))
+  do j = 1, npts
+     do k = 1, npts
+        P(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
+     end do
+  end do
+
 end subroutine assemble_system1
 
 subroutine assemble_system2(a, b, npts, V, rhs, x)
 
-  real(8), intent(in)  :: a, b             ! bound of domain
-  integer              :: npts             ! number of interior points
-  real(8), intent(out) :: V(npts+2,npts+2) ! banded matrix
-  real(8), intent(out) :: rhs(npts+2)
-  real(8), intent(out) :: x(npts+2)
+  real(8), intent(in)  :: a, b         ! bound of domain
+  integer              :: npts         ! number of total points
+  real(8), intent(out) :: V(npts,npts) ! banded matrix
+  real(8), intent(out) :: rhs(npts)
+  real(8), intent(out) :: x(npts)
   integer              :: i, j
   real(8) :: h
 
-  h = (b-a)/dble(npts+1)
+  h = (b-a)/dble(npts)
   V = 0.0d0
 
   ! Set the inner block
-  do j = 2, npts + 1
-     do i = 2, npts + 1
+  do j = 1, npts - 1
+     do i = 1, npts - 1
         if (i .eq. j-1) then
            ! lower triangle
            V(i,j) = -1.0d0
@@ -2229,22 +2422,21 @@ subroutine assemble_system2(a, b, npts, V, rhs, x)
   end do
 
   ! Set the first and last rows
-  V(1,1) = 1.0d0
-  V(2,1) = 0.0d0
-  V(npts+2, npts+2) = 1.0d0
-  V(npts+2, npts+1) = -1.0d0
+  V(npts, npts) = 1.0d0
+  V(npts, npts-1) = -1.0d0
   
-
   ! Assemble the RHS
-  rhs(1) = 1.0d0
-  do i = 2, npts + 1
-     rhs(i) = h*h*(2.0d0*dble(i-1)*h - 0.5d0)
+  do i = 1, npts - 1
+     rhs(i) = h*h*(2.0d0*dble(i)*h - 0.5d0)
   end do
-  rhs(npts+2) = 0.0d0
-  rhs(2) = rhs(2) + 1.0d0
+  rhs(1) = rhs(1) + 1.0d0
+  rhs(npts) = 0.0d0
+
 
   ! Initial solution profile
-  x = 1.0d0
+  do i = 1, npts
+     !x(i) =  1.0d0 - 1.1d0*(dble(i)*h)
+  end do
 
 end subroutine assemble_system2
 
