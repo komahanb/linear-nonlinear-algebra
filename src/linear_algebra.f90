@@ -338,6 +338,8 @@ contains
     real(dp) :: alpha, beta
     real(dp) :: bnorm, rnorm
 
+    stop"fix broken"
+    
     ! Memory allocations
     allocate(r, w, mold=x)
     allocate(rho(max_it))
