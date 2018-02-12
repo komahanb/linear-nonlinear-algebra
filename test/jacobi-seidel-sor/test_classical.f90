@@ -91,13 +91,6 @@ subroutine check_classical
 
   end block test_iter_sol
 
-  print *, "test ode"
-
-  test_ode: block
-    real(8) :: V(4,4), rhs(4)
-    call assemble_matrix(0.0d0, 1.0d0, 4, V, rhs)
-  end block test_ode
-
   print *, "problem5"
   problem5: block
 

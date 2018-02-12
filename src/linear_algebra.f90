@@ -338,7 +338,7 @@ contains
     real(dp) :: alpha, beta
     real(dp) :: bnorm, rnorm
 
-    stop"fix broken"
+    stop
     
     ! Memory allocations
     allocate(r, w, mold=x)
