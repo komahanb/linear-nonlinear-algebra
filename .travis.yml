@@ -31,5 +31,5 @@ before_install:
 install: ./build.sh
 
 script:
-  - cd test; cd jacobi-seidel-sor/; make; ./run; cd -;
-  - cd test; cd conjugate_gradient/; make; ./run; cd -;
+  - cd test/jacobi-seidel-sor && make && ./run && cd - ;
+  - cd test/conjugate_gradient && make && ./run && cd - ;
