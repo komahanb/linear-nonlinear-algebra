@@ -22,7 +22,7 @@ subroutine check_conjugate
 
   dirichlet : block
 
-    integer, parameter :: npts = 64
+    integer, parameter :: npts = 40
     real(8), parameter :: max_tol = 1.0d-6
     integer, parameter :: max_it = 100000
     real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts), P(npts, npts)
@@ -31,7 +31,22 @@ subroutine check_conjugate
 
     ! Solve using LU factorization
     call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P)
+
+!    print *, A
+!    print *, P
+!!$
+!!$stop
+!!$
+!!$print *, real(eigvals(A))
+!!$print *, real(eigvals(P))
+!!$
+
     xtmp = solve(A,b)
+
+
+!!$stop
+!!$    
+!    stop
 
     ! solve using CG
     call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P) 
@@ -50,7 +65,9 @@ subroutine check_conjugate
     close(11)
 
   end block dirichlet
-  
+
+!!$stop
+
   mixed : block
     
     integer, parameter :: npts = 64
@@ -85,10 +102,12 @@ subroutine check_conjugate
 end subroutine check_conjugate
 
 !---------------------------------------------------------------------!
-! Assemble -U_xx = 2x - 0.5, U(0) = U(1)= 0, x in [0,1]
+! Assemble -U_xx = 2x - 0.5, U(0) = 1;  U(1)= 0, x in [0,1]
 !---------------------------------------------------------------------!
 
 subroutine assemble_system_dirichlet(a, b, npts, V, rhs, u, P)
+
+  use linear_algebra, only : inv
 
   implicit none
   
@@ -98,7 +117,7 @@ subroutine assemble_system_dirichlet(a, b, npts, V, rhs, u, P)
   real(8), intent(out) :: rhs(npts)
   real(8), intent(out) :: u(npts)
   real(8), intent(out) :: P(npts,npts)
-  real(8) :: PTMP(npts,npts)
+  real(8) :: S(npts,npts), D(npts, npts)
   
   real(8), parameter :: PI = 3.141592653589793d0
   real(8)            :: h, alpha
@@ -136,23 +155,45 @@ subroutine assemble_system_dirichlet(a, b, npts, V, rhs, u, P)
      rhs(i) = h*h*(2.0d0*dble(i)*h - 0.5d0)
   end do
   rhs(1) = rhs(1) + 1.0d0
-  rhs(M) = rhs(M) + 1.0d0
-  
+  rhs(M) = rhs(M)
+
   ! Initial solution profile use sin function as a first guess
   do i = 1, M
      u(i) =  sin(dble(i)*h*PI)
   end do
 
   ! Set a preconditioner
-  !P = inv(V)
   alpha = sqrt(2.0d0/dble(npts+1))
   do j = 1, M
      do k = 1, N
-        PTMP(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
+        S(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
      end do
   end do
 
-  p = matmul(ptmp, ptmp)
+  ! lambda
+  D = matmul(S, matmul(V, S))
+  do j = 1, M
+     D(j,j) = 1.0d0/D(j,j)
+  end do
+  p = matmul(S, matmul(D, S))
+
+  !p = ptmp
+  !print *, p
+  !stop
+
+!!$
+!!$  ! Find the inverse
+!!$  p = 0.0d0
+!!$  do j = 1, M
+!!$        p(j,j) = 1.0d0/ptmp(j,j)
+!!$  end do
+
+  !p =  matmul(matmul(ptmp, V), transpose(ptmp))
+
+  !p = inv(P)
+  !p = sqrt(p)
+  !p = matmul(ptmp, ptmp)
+  !p = ptmp !matmul(ptmp, ptmp)
 
 end subroutine assemble_system_dirichlet
 
@@ -162,6 +203,8 @@ end subroutine assemble_system_dirichlet
 
 subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
 
+  use linear_algebra, only : inv
+
   implicit none
   
   real(8), intent(in)  :: a, b ! bounds of the domain
@@ -170,7 +213,7 @@ subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
   real(8), intent(out) :: rhs(npts+1)
   real(8), intent(out) :: u(npts+1)
   real(8), intent(out) :: P(npts+1,npts+1)
-  real(8) :: ptmp(npts+1, npts+1)  
+  real(8) :: S(npts+1, npts+1), D(npts+1, npts+1)
   real(8), parameter :: PI = 3.141592653589793d0
   real(8)            :: h, alpha
   integer            :: M, N
@@ -219,14 +262,25 @@ subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
   alpha = sqrt(2.0d0/dble(npts+1))
   do j = 1, M
      do k = 1, N
-        PTMP(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
+        S(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
      end do
   end do
 
-  p = matmul(ptmp, ptmp)
+
+  ! lambda
+  D = matmul(S, matmul(V, S))
+
+  do j = 1, M
+     D(j,j) = 1.0d0/D(j,j)
+  end do
+  p = matmul(S, matmul(D, S))
+
+
+!!stop
 
   ! Set a preconditioner
-  !P = inv(V)
+!!$  P = inv(V)
+
 !!$  alpha = sqrt(2.0d0/dble(npts+1))
 !!$  do j = 1, npts
 !!$     do k = 1, npts
