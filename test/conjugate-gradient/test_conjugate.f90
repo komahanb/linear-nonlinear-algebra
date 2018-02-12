@@ -39,9 +39,9 @@ subroutine check_conjugate
     print *, 'cg', tol, iter
     
     ! Solve using preconditioned CG
-    !call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P) 
-    !call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
-    !print *, 'pcg', tol, iter 
+    call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P) 
+    call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
+    print *, 'pcg', tol, iter 
 
     open(11, file='dirichlet.dat')
     do i = 1, npts
@@ -70,9 +70,9 @@ subroutine check_conjugate
     print *, 'cg', tol, iter
 
     ! Solve using preconditioned CG
-    !call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x, P) 
-    !call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
-    !print *, 'pcg', tol, iter
+    call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x, P) 
+    call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
+    print *, 'pcg', tol, iter
     
     open(11, file='mixed.dat')
     do i = 1, npts + 1
@@ -98,6 +98,7 @@ subroutine assemble_system_dirichlet(a, b, npts, V, rhs, u, P)
   real(8), intent(out) :: rhs(npts)
   real(8), intent(out) :: u(npts)
   real(8), intent(out) :: P(npts,npts)
+  real(8) :: PTMP(npts,npts)
   
   real(8), parameter :: PI = 3.141592653589793d0
   real(8)            :: h, alpha
@@ -144,12 +145,14 @@ subroutine assemble_system_dirichlet(a, b, npts, V, rhs, u, P)
 
   ! Set a preconditioner
   !P = inv(V)
-!!$  alpha = sqrt(2.0d0/dble(npts+1))
-!!$  do j = 1, npts
-!!$     do k = 1, npts
-!!$        P(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
-!!$     end do
-!!$  end do
+  alpha = sqrt(2.0d0/dble(npts+1))
+  do j = 1, M
+     do k = 1, N
+        PTMP(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
+     end do
+  end do
+
+  p = matmul(ptmp, ptmp)
 
 end subroutine assemble_system_dirichlet
 
@@ -167,7 +170,7 @@ subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
   real(8), intent(out) :: rhs(npts+1)
   real(8), intent(out) :: u(npts+1)
   real(8), intent(out) :: P(npts+1,npts+1)
-  
+  real(8) :: ptmp(npts+1, npts+1)  
   real(8), parameter :: PI = 3.141592653589793d0
   real(8)            :: h, alpha
   integer            :: M, N
@@ -212,6 +215,15 @@ subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
   do i = 1, M
      u(i) = sin(dble(i)*h*PI)
   end do
+
+  alpha = sqrt(2.0d0/dble(npts+1))
+  do j = 1, M
+     do k = 1, N
+        PTMP(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
+     end do
+  end do
+
+  p = matmul(ptmp, ptmp)
 
   ! Set a preconditioner
   !P = inv(V)
