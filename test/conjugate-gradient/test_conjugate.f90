@@ -22,30 +22,31 @@ subroutine check_conjugate
 
   dirichlet : block
 
-    integer, parameter :: npts = 512
-    real(8), parameter :: max_tol = 1.0d-6
+    integer, parameter :: npts = 1024
+    real(8), parameter :: max_tol = 1.0d-8
     integer, parameter :: max_it = 100000
-    real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts), P(npts, npts)
+    real(8) :: x(npts,3), b(npts), A(npts,npts), P(npts, npts)
     integer :: iter, flag, i, j
     real(8) :: tol
 
     ! Solve using LU factorization
-    call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P)
-    xtmp = solve(A,b)
+    call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x(:,1), P)
+    x(:,1) = solve(A,b)
 
     ! solve using CG
-    call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P) 
-    call dcg(A, b, max_it, max_tol, x, iter, tol, flag)
+    call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x(:,2), P) 
+    call dcg(A, b, max_it, max_tol, x(:,2), iter, tol, flag)
     print *, 'cg', tol, iter
 
     ! Solve using preconditioned CG
-    call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P) 
-    call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
+    call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x(:,3), P) 
+    call dpcg(A, P,  b, max_it, max_tol, x(:,3), iter, tol, flag)
     print *, 'pcg', tol, iter 
 
     open(11, file='dirichlet.dat')
     do i = 1, npts
-       write(11, *) dble(i)/dble(npts+1), x(i), xtmp(i)
+       ! x, exact, xcg, xpcg
+       write(11, *) dble(i)/dble(npts+1), x(i,1), x(i,2), x(i,3)
     end do
     close(11)
 
@@ -53,30 +54,30 @@ subroutine check_conjugate
 
   mixed : block
 
-    integer, parameter :: npts = 512
-    real(8), parameter :: max_tol = 1.0d-6
+    integer, parameter :: npts = 1024
+    real(8), parameter :: max_tol = 1.0d-8
     integer, parameter :: max_it = 100000
-    real(8) :: x(npts+1), xtmp(npts+1), b(npts+1), A(npts+1,npts+1), P(npts+1, npts+1)
+    real(8) :: x(npts+1,3), b(npts+1), A(npts+1,npts+1), P(npts+1, npts+1)
     integer :: iter, flag, i, j
     real(8) :: tol
 
     ! Solve using LU factorization
-    call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x, P)
-    xtmp = solve(A,b)
+    call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x(:,1), P)
+    x(:,1) = solve(A,b)
 
     ! Solve using CG
-    call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x, P) 
-    call dcg(A, b, max_it, max_tol, x, iter, tol, flag)
+    call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x(:,2), P) 
+    call dcg(A, b, max_it, max_tol, x(:,2), iter, tol, flag)
     print *, 'cg', tol, iter
 
     ! Solve using preconditioned CG
-    call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x, P) 
-    call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
+    call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x(:,3), P) 
+    call dpcg(A, P,  b, max_it, max_tol, x(:,3), iter, tol, flag)
     print *, 'pcg', tol, iter
 
     open(11, file='mixed.dat')
     do i = 1, npts + 1
-       write(11, *) dble(i)/dble(npts+1), x(i), xtmp(i)
+       write(11, *) dble(i)/dble(npts+1), x(i,1), x(i,2), x(i,3)
     end do
     close(11)
 

@@ -10,6 +10,8 @@
 \usepackage[plain]{algorithm}
 \usepackage{algpseudocode}
 \usepackage{fancyvrb}
+\usepackage{multirow}
+\usepackage{booktabs}
 \usetikzlibrary{automata,positioning}
 
 %
@@ -220,7 +222,6 @@ $$
 \end{bmatrix}
 $$
 
-
 \end{homeworkProblem}
 
 \clearpage
@@ -295,8 +296,8 @@ $$ This is the theoretical lower bound for the number of steepest
 
 \emph{Discretize the following differential equation}
 $$ -u^{\prime\prime} = f(x) = 2x -\frac{1}{2}$$
-$$ u(0) = 1, u^\prime(1) = 0~(case~a),$$ 
-$$u(0) = 1, u(1) = 0~(case~b)$$ 
+$$u(0) = 1, u(1) = 0,~(case~a)$$ 
+$$ u(0) = 1, u^\prime(1) = 0~(case~b)$$ 
 $$x \in [0,1]$$ 
 
 \emph{by the central difference scheme with $n$ interior mesh
@@ -309,52 +310,144 @@ $$x \in [0,1]$$
 
 \cite{sine-transform}
 
-  \paragraph{(a) Dirichlet and Neumann BC:}
+  \paragraph{(a) Linear System}
 
   \medskip
 
-  The discretized ODE is $ - u_{i+1} +2 u_i - u_{i-1} = h^2f(x_i).$ We
-  impose a Neumann boundary condition that the unknown itself is not
-  given at the right boundary so we have to solve for it. This means
-  that our unknowns are not just at the interior points but also at
-  any point where a Neumann condition is specified. Therefore, the
+  The discretized ODE is $ - u_{i+1} +2 u_i - u_{i-1} =
+  h^2f(x_i)$. This leads to a tridiagonal banded linear system.
+
+  \medskip
+
+  For the case $(a)$ where both the systems are specified the unknown $u$
+  (dicrichlet), we get the following linear system.
+
+  $$ \begin{bmatrix} 
+    2 & -1  &  0 & 0 & 0\\
+    -1 & 2 & -1  &  0 & 0 \\
+    0 & \ddots & \ddots & \ddots & 0 \\
+    0 & 0 & -1 & 2 & -1 \\ 
+    0 & 0 &  0 & -1 & 2 \\  
+  \end{bmatrix}
+  \begin{bmatrix}
+    u(x_1) \\
+    u(x_2) \\
+    \vdots\\
+    u(x_{n-1}) \\
+    u(x_{n}) \\
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1 +  h^2f(x_1) \\
+    h^2f(x_2) \\
+    \vdots\\
+    h^2f(x_{n-1}) \\
+    0 + h^2f(x_{n}) \\
+  \end{bmatrix}$$  
+
+  For case $(b)$, we impose a Neumann boundary condition that the unknown itself is
+  not given at the right boundary so we have to solve for it. This
+  means that our unknowns are not just at the interior points but also
+  at any point where a Neumann condition is specified. Therefore, the
   size of the linear system is $m=n+1$, where $m$ is the total number
   of points and $n$ is the number of interior points.  The resulting
   linear system is
   $$ \begin{bmatrix} 
-    % 1 &  0 &  0  &  0 & 0 & 0 \\
-    -1 & 2 & -1  &  0 & 0 & 0\\
-    0 &-1 & 2 & -1  &  0 & 0 \\
-    0 & 0 & \ddots & \ddots & \ddots & 0 \\
-    0 & 0 & 0 & -1 & 2 & -1 \\ 
-    0 & 0 & 0 &  0 & -1 & 1 \\  
+      2 & -1  &  0 & 0 & 0\\
+    -1 & 2 & -1  &  0 & 0 \\
+     0 & \ddots & \ddots & \ddots & 0 \\
+     0 & 0 & -1 & 2 & -1 \\ 
+     0 & 0 &  0 & -1 & 1 \\  
   \end{bmatrix}
   \begin{bmatrix}
     %  u(x_1) \\
+    u(x_1) \\
     u(x_2) \\
-    u(x_3) \\
     \vdots\\
     u(x_{n}) \\
-    u(x_m) \\
+    u(x_{n+1}) \\
   \end{bmatrix}
   =
   \begin{bmatrix}
-    %1 \\
-    1 +  h^2f(x_2) \\
-    h^2f(x_3) \\
+    1 +  h^2f(x_1) \\
+    h^2f(x_2) \\
     \vdots\\
     h^2f(x_{n}) \\
     0 \\
-  \end{bmatrix}$$
+  \end{bmatrix}$$  
 
-\end{homeworkProblem}
+
+  \paragraph{(b) Preconditioning based on sine transform}
+
+  The preconditioner is $M = S D^{-1} S$, where $D=SAS$ (a similarity
+  transformation) is a diagonal matrix~\cite{sine-transform}.  The
+  diagonal matrix is inverted in $n$ operations, simply by finding the
+  reciprocal of the diagonal elements. We exploit the properties of
+  the sine-transform matrix $S$ that is is orthonormal (i.e. $S^T =
+  S^{-1}$ and $SS^T = I$).
+
+  \paragraph{(c) Comparison of CG and PCG}
+
+  The CG and PCG algorithms were implemented in the computer code. The
+  performances of each method for both test cases is summarized in
+  Table~\ref{tab:summary}. It can be seen that the preconditioned algorithms
+  perform much better than the CG algorithm. This is due to the nature
+  of the preconditioning matrix $M$ is approximating the inverse using
+  similarity transformation involing sine-transforms. The results are
+  similar to the ones reported in the
+  literature~\cite{sine-transform}.  An observation that can be made
+  about the case $a$ is the vectors $S$ matrix are the actual
+  eigenfunctions and therefore the preconditioner $M$ is the actual
+  inverse. This leads to the theoretical convergence expected in one
+  iteration. However, for case $b$, $M$ is not the actual inverse but
+  indeed a close enough approximation which drastically reduced the
+  number of iterations required to converge to the actual
+  solution. This exercise emphasizes the importance of the choice of
+  preconditioners. 
+
+\begin{table}
+  \caption{Comparison of number of iterations taken to converge with
+    CG and PCG methods.}  \centering
+  \begin{tabular}{c|c|c}
+    \toprule
+      n   &  Case $(a)$  & Case $(b)$ \\
+      &  CG/PCG    & CG/PCG \\
+      \midrule
+      64    &  64/1   & 65/3  \\
+      128   &  128/1   & 129/3  \\
+      256   &  256/1   & 257/4 \\
+      512   &  512/1 &  513/4\\
+      1024  &  1024/1 &  1025/4\\
+      \bottomrule
+  \end{tabular}
+  \label{tab:summary}
+\end{table}
+
+
+Figure~\ref{fig:profile} compares
+  the solutions produced by each of these methods. All methods were
+  converged to the same tolerance and therefore produce similar
+  profile for the unknown $u(x)$. A minor discrepancy with the exact
+  solution can also be noticed but it can be reduced with a higher
+  tolerance for convergence.
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{profile.pdf}    
+    \caption{Plot of solution profile in the domain for different
+      solution methods.}
+    \label{fig:profile}
+  \end{figure}
 
 \begin{thebibliography}{9}
-\bibitem{sine-transform} 
-Chan, R. H., Ng, M. K., Wong, C. K. (1996). Sine transform based
-preconditioners for symmetric Toeplitz systems. Linear Algebra and Its
-Applications, 232,
-237–259. https://doi.org/https://doi.org/10.1016/0024-3795(94)00049-2
+\bibitem{sine-transform} Chan, R. H., Ng, M. K., Wong,
+  C. K. \emph{Sine transform based preconditioners for
+    symmetric Toeplitz systems}. Linear Algebra and Its Applications,
+  232, pp 237--259, 1996. doi:
+  https://doi.org/10.1016/0024-3795(94)00049-2
 \end{thebibliography}
+
+  
+\end{homeworkProblem}
 
 \end{document}
