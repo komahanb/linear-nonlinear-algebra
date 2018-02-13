@@ -22,7 +22,7 @@ subroutine check_conjugate
 
   dirichlet : block
 
-    integer, parameter :: npts = 40
+    integer, parameter :: npts = 512
     real(8), parameter :: max_tol = 1.0d-6
     integer, parameter :: max_it = 100000
     real(8) :: x(npts), xtmp(npts), b(npts), A(npts,npts), P(npts, npts)
@@ -31,28 +31,13 @@ subroutine check_conjugate
 
     ! Solve using LU factorization
     call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P)
-
-!    print *, A
-!    print *, P
-!!$
-!!$stop
-!!$
-!!$print *, real(eigvals(A))
-!!$print *, real(eigvals(P))
-!!$
-
     xtmp = solve(A,b)
-
-
-!!$stop
-!!$    
-!    stop
 
     ! solve using CG
     call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P) 
     call dcg(A, b, max_it, max_tol, x, iter, tol, flag)
     print *, 'cg', tol, iter
-    
+
     ! Solve using preconditioned CG
     call assemble_system_dirichlet(0.0d0, 1.0d0, npts, A, b, x, P) 
     call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
@@ -66,11 +51,9 @@ subroutine check_conjugate
 
   end block dirichlet
 
-!!$stop
-
   mixed : block
-    
-    integer, parameter :: npts = 64
+
+    integer, parameter :: npts = 512
     real(8), parameter :: max_tol = 1.0d-6
     integer, parameter :: max_it = 100000
     real(8) :: x(npts+1), xtmp(npts+1), b(npts+1), A(npts+1,npts+1), P(npts+1, npts+1)
@@ -90,7 +73,7 @@ subroutine check_conjugate
     call assemble_system_mixed(0.0d0, 1.0d0, npts, A, b, x, P) 
     call dpcg(A, P,  b, max_it, max_tol, x, iter, tol, flag)
     print *, 'pcg', tol, iter
-    
+
     open(11, file='mixed.dat')
     do i = 1, npts + 1
        write(11, *) dble(i)/dble(npts+1), x(i), xtmp(i)
@@ -162,7 +145,7 @@ subroutine assemble_system_dirichlet(a, b, npts, V, rhs, u, P)
      u(i) =  sin(dble(i)*h*PI)
   end do
 
-  ! Set a preconditioner
+  ! Find the sine transform matrix
   alpha = sqrt(2.0d0/dble(npts+1))
   do j = 1, M
      do k = 1, N
@@ -170,30 +153,16 @@ subroutine assemble_system_dirichlet(a, b, npts, V, rhs, u, P)
      end do
   end do
 
-  ! lambda
+  ! Find the diagonal matrix
   D = matmul(S, matmul(V, S))
+
+  ! Invert the digonal matrix easily
   do j = 1, M
      D(j,j) = 1.0d0/D(j,j)
   end do
+  
+  ! Define the preconditioner
   p = matmul(S, matmul(D, S))
-
-  !p = ptmp
-  !print *, p
-  !stop
-
-!!$
-!!$  ! Find the inverse
-!!$  p = 0.0d0
-!!$  do j = 1, M
-!!$        p(j,j) = 1.0d0/ptmp(j,j)
-!!$  end do
-
-  !p =  matmul(matmul(ptmp, V), transpose(ptmp))
-
-  !p = inv(P)
-  !p = sqrt(p)
-  !p = matmul(ptmp, ptmp)
-  !p = ptmp !matmul(ptmp, ptmp)
 
 end subroutine assemble_system_dirichlet
 
@@ -258,7 +227,7 @@ subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
   do i = 1, M
      u(i) = sin(dble(i)*h*PI)
   end do
-
+  ! Find the sine transform matrix
   alpha = sqrt(2.0d0/dble(npts+1))
   do j = 1, M
      do k = 1, N
@@ -266,26 +235,15 @@ subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
      end do
   end do
 
-
-  ! lambda
+  ! Find the diagonal matrix
   D = matmul(S, matmul(V, S))
 
+  ! Invert the digonal matrix easily
   do j = 1, M
      D(j,j) = 1.0d0/D(j,j)
   end do
+  
+  ! Define the preconditioner
   p = matmul(S, matmul(D, S))
-
-
-!!stop
-
-  ! Set a preconditioner
-!!$  P = inv(V)
-
-!!$  alpha = sqrt(2.0d0/dble(npts+1))
-!!$  do j = 1, npts
-!!$     do k = 1, npts
-!!$        P(k,j) = alpha*sin(PI*dble(j*k)/dble(npts+1))
-!!$     end do
-!!$  end do
 
 end subroutine assemble_system_mixed
