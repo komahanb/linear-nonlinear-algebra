@@ -247,7 +247,7 @@ $$
   $$
   On rearranging, we get
 $$
-  m = 1 + \dfrac{\log {\dfrac{1}{n}}}{\log \dfrac{n-1}{n+1}}
+  m =  \dfrac{\log {\dfrac{1}{n}}}{\log \dfrac{n-1}{n+1}} - 1
 $$ This is the theoretical lower bound for the number of steepest
   descent iterations required to achive the ${\cal{O}}(1/n)$ error
   reduction.
@@ -278,7 +278,7 @@ $$ This is the theoretical lower bound for the number of steepest
   The required relative reduction in error is $10^{-3}$. Using this
   information 
   $$
-  m = 1 + \dfrac{\log {10^{-3}}}{\log \dfrac{\sqrt{10.2}-1}{\sqrt{10.2}+1}} = 11.66 \approx 12
+  m = \dfrac{\log {10^{-3}}}{\log \dfrac{\sqrt{10.2}-1}{\sqrt{10.2}+1}} - 1 = 10.66 \approx 11
   $$ 
 
   At each CG iteration there are 4 matrix-vector
@@ -287,7 +287,7 @@ $$ This is the theoretical lower bound for the number of steepest
   one matrix-vector multiplication per iteration.  It is given that
   each matrix-vector product costs $4n$ floating point
   operations. Thus, the number of floating point operations would be
-  $12 \times 4n = 48n$, where $n$ is the size of the matrix.
+  $11 \times 4n = 44n$, where $n$ is the size of the matrix.
 
 \end{homeworkProblem}
 

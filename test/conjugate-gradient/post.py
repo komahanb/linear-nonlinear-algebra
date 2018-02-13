@@ -90,8 +90,9 @@ class PostOpt:
         ax.set_xlabel('Domain x')
         #niters_labl = [1, 20, 40, 60, 80, 100]
         #ax.set_yticks(np.logspace(-5, 0, 6, endpoint=True))
-        #ax.set_xticks(np.linspace(1, 75, 5, endpoint=True, dtype=np.int))
-        ax.legend(loc='upper left', framealpha=0.0)
+        #ax.set_yticks(np.linspace(0, 1, 5, endpoint=True, dtype=np.int))
+        ax.set_yticks(np.linspace(0, 1.5, 4, endpoint=True))
+        ax.legend(loc='lower left', framealpha=0.0)
         
         plt.savefig(name, bbox_inches='tight', pad_inches=0.05)
         
@@ -110,13 +111,16 @@ if __name__ == "__main__":
     soldirichlet = []
     for line in fdirichlet:
         entry = line.split()
-        soldirichlet.append([float(entry[0]), float(entry[1]), float(entry[2])])
+        soldirichlet.append([float(entry[0]),
+                             float(entry[1]),
+                             float(entry[2]),
+                             float(entry[3])])
     soldirichlet = np.array(soldirichlet)
 
     solmixed = []
     for line in fmixed:
         entry = line.split()
-        solmixed.append([float(entry[0]), float(entry[1]), float(entry[2])])
+        solmixed.append([float(entry[0]), float(entry[1]), float(entry[2]), float(entry[3])])
     solmixed = np.array(solmixed)
 
     # Plot the solution in the profile
