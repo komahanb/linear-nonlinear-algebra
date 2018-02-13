@@ -239,15 +239,15 @@ $$
 
   Taking logarithm on both sides:
   $$
-  (m + 1) \log \left( \dfrac{\kappa(A)-1}{\kappa(A)+1} \right) = \log \left( {\dfrac{||e||_{A}^{m+1}}{||e||_{A}^{0}}} \right)
+  (m + 1) \ln \left( \dfrac{\kappa(A)-1}{\kappa(A)+1} \right) \ge \ln \left( {\dfrac{||e||_{A}^{m+1}}{||e||_{A}^{0}}} \right)
   $$
   Using the given estimates for $A$ , this expression becomes
   $$
-  (m + 1) \log \dfrac{n-1}{n+1} = \log {\dfrac{1}{n}}
+  (m + 1) \ln \dfrac{n-1}{n+1} \ge \ln {\dfrac{1}{n}}
   $$
   On rearranging, we get
 $$
-  m =  \dfrac{\log {\dfrac{1}{n}}}{\log \dfrac{n-1}{n+1}} - 1
+  m \ge  \dfrac{\ln {\dfrac{1}{n}}}{\ln \dfrac{n-1}{n+1}} - 1
 $$ This is the theoretical lower bound for the number of steepest
   descent iterations required to achive the ${\cal{O}}(1/n)$ error
   reduction.
@@ -270,15 +270,15 @@ $$ This is the theoretical lower bound for the number of steepest
 
   Taking logarithm on both sides:
   $$
-  (m + 1) \log \left( \dfrac{\sqrt{\kappa(A)}-1}{\sqrt{\kappa(A)}+1} \right) = 
-  \log \left( {\dfrac{||e||_{A}^{m+1}}{||e||_{A}^{0}}} \right)
+  (m + 1) \ln \left( \dfrac{\sqrt{\kappa(A)}-1}{\sqrt{\kappa(A)}+1} \right) \ge 
+  \ln \left( {\dfrac{||e||_{A}^{m+1}}{||e||_{A}^{0}}} \right)
   $$ 
   The condition number $\kappa(A) =
   \dfrac{|\lambda_{max}|}{|\lambda_{min}|} = \dfrac{10.2}{1} = 10.2$.
   The required relative reduction in error is $10^{-3}$. Using this
   information 
   $$
-  m = \dfrac{\log {10^{-3}}}{\log \dfrac{\sqrt{10.2}-1}{\sqrt{10.2}+1}} - 1 = 10.66 \approx 11
+  m \ge \dfrac{\ln {10^{-3}}}{\ln \dfrac{\sqrt{10.2}-1}{\sqrt{10.2}+1}} - 1 = 9.66 \approx 10
   $$ 
 
   At each CG iteration there are 4 matrix-vector
@@ -287,7 +287,7 @@ $$ This is the theoretical lower bound for the number of steepest
   one matrix-vector multiplication per iteration.  It is given that
   each matrix-vector product costs $4n$ floating point
   operations. Thus, the number of floating point operations would be
-  $11 \times 4n = 44n$, where $n$ is the size of the matrix.
+  $10 \times 4n = 40n$, where $n$ is the size of the matrix.
 
 \end{homeworkProblem}
 
@@ -424,12 +424,12 @@ $$x \in [0,1]$$
 \end{table}
 
 
-Figure~\ref{fig:profile} compares
-  the solutions produced by each of these methods. All methods were
-  converged to the same tolerance and therefore produce similar
-  profile for the unknown $u(x)$. A minor discrepancy with the exact
-  solution can also be noticed but it can be reduced with a higher
-  tolerance for convergence.
+We will now take a look at the solution profile obtained with each
+method. Figure~\ref{fig:profile} compares the solutions produced by
+CG, PCG and exact (direct) solution. All iterative methods were
+converged to the same tolerance $10^{-8}$. The dirichlet BC condition
+can be seen to be satisfied for case (a) and the zero-slope can be
+seen in the other case (b).
 
   \begin{figure}[H]
     \centering
