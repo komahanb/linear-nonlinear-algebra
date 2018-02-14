@@ -22,7 +22,7 @@ subroutine check_conjugate
 
   dirichlet : block
 
-    integer, parameter :: npts = 1024
+    integer, parameter :: npts = 64
     real(8), parameter :: max_tol = 1.0d-8
     integer, parameter :: max_it = 100000
     real(8) :: x(npts,3), b(npts), A(npts,npts), P(npts, npts)
@@ -54,7 +54,7 @@ subroutine check_conjugate
 
   mixed : block
 
-    integer, parameter :: npts = 1024
+    integer, parameter :: npts = 256
     real(8), parameter :: max_tol = 1.0d-8
     integer, parameter :: max_it = 100000
     real(8) :: x(npts+1,3), b(npts+1), A(npts+1,npts+1), P(npts+1, npts+1)
@@ -222,7 +222,7 @@ subroutine assemble_system_mixed(a, b, npts, V, rhs, u, P)
      rhs(i) = h*h*(2.0d0*dble(i)*h - 0.5d0)
   end do
   rhs(1) = rhs(1) + 1.0d0
-  rhs(M) = 0.0d0
+  rhs(M) = rhs(M)/2.0d0
 
   ! Initial solution profile use sin function as a first guess
   do i = 1, M

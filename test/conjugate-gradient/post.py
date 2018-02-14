@@ -47,7 +47,7 @@ for i in range(len(tableau20)):
     r, g, b = tableau20[i]    
     tableau20[i] = (r / 255., g / 255., b / 255.)
 
-mevery = 90
+mevery = 3
 
 class PostOpt:
     """

@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/komahanb/iterative-algebra.svg?branch=master)](https://travis-ci.org/komahanb/iterative-algebra)
-
-[![Coverage Status](https://coveralls.io/repos/github/komahanb/iterative-algebra/badge.svg?branch=master)](https://coveralls.io/github/komahanb/iterative-algebra?branch=master)
+[![Build Status](https://travis-ci.org/komahanb/iterative-algebra.svg?branch=master)](https://travis-ci.org/komahanb/iterative-algebra) [![Coverage Status](https://coveralls.io/repos/github/komahanb/iterative-algebra/badge.svg?branch=master)](https://coveralls.io/github/komahanb/iterative-algebra?branch=master)
 
 # Iterative Methods -- A Fortran-Python library for linear and nonlinear algebra
 
@@ -8,10 +6,10 @@
 sh ./build.sh
 
 # How to run programs/examples?
-cd test
-cd xyz
-make
-./run
+- cd test
+- cd specific_example
+- make
+- ./run
 
 Directories:
 ------------

@@ -314,13 +314,10 @@ $$x \in [0,1]$$
 
   \medskip
 
-  The discretized ODE is $ - u_{i+1} +2 u_i - u_{i-1} =
-  h^2f(x_i)$. This leads to a tridiagonal banded linear system.
-
-  \medskip
-
-  For the case $(a)$ where both the systems are specified the unknown $u$
-  (dicrichlet), we get the following linear system.
+  The discretized ODE is $$- u_{i+1} +2 u_i - u_{i-1} = h^2f(x_i),$$
+  where $h = \frac{b-a}{n+1}$, $x_i=ih$, and $i = 0, \ldots,
+  n+1$. This leads to a tridiagonal banded linear system.  For the
+  case $(a)$ (Dirichlet) we get the following linear system.
 
   $$ \begin{bmatrix} 
     2 & -1  &  0 & 0 & 0\\
@@ -373,9 +370,14 @@ $$x \in [0,1]$$
     h^2f(x_2) \\
     \vdots\\
     h^2f(x_{n}) \\
-    0 \\
+    \frac{h^2}{2} f(x_{n+1}) \\
   \end{bmatrix}$$  
 
+  In formulating the Neumann BC, a second order central difference
+  operator is used by introducing a ghost node beyond the boundary \emph{i.e.,}
+  $$ \dfrac{u_{n+2}-u_{n}}{2h} = 0 \rightarrow u_{n+2} = u_{n}$$ 
+  and the discretized boundary equation
+  $$ - u_{n} +2 u_{n+1} - u_{n+2} = h^2f(x_{n+1}). $$
 
   \paragraph{(b) Preconditioning based on sine transform}
 
@@ -405,7 +407,7 @@ $$x \in [0,1]$$
   solution. This exercise emphasizes the importance of the choice of
   preconditioners. 
 
-\begin{table}
+\begin{table}[H]
   \caption{Comparison of number of iterations taken to converge with
     CG and PCG methods.}  \centering
   \begin{tabular}{c|c|c}
@@ -427,13 +429,13 @@ $$x \in [0,1]$$
 We will now take a look at the solution profile obtained with each
 method. Figure~\ref{fig:profile} compares the solutions produced by
 CG, PCG and exact (direct) solution. All iterative methods were
-converged to the same tolerance $10^{-8}$. The dirichlet BC condition
+converged to the same tolerance $10^{-8}$. The Dirichlet BC condition
 can be seen to be satisfied for case (a) and the zero-slope can be
 seen in the other case (b).
 
   \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\textwidth]{profile.pdf}    
+    \includegraphics[width=0.5\textwidth]{profile.pdf}    
     \caption{Plot of solution profile in the domain for different
       solution methods.}
     \label{fig:profile}
