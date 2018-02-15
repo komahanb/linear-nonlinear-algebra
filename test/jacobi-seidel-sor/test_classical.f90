@@ -94,7 +94,7 @@ subroutine check_classical
   print *, "problem5"
   problem5: block
 
-    integer, parameter :: npts = 1000
+    integer, parameter :: npts = 100
     real(8), parameter :: max_tol = 1.0d-6
     integer, parameter :: max_it  = 100000
 
