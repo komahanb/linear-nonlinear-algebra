@@ -31,6 +31,9 @@ module linear_algebra
   ! Sophisticated Iterative solvers
   public :: dcg, dpcg, dsd
 
+  ! Solvers for non-symmetric systems
+  public :: dcgnr
+
   ! Module parameters  
   complex(dp), parameter :: i_ = (0, 1)
   
@@ -131,6 +134,60 @@ module linear_algebra
   end interface assert_shape
 
 contains
+
+  !-------------------------------------------------------------------!
+  ! Solve the linear system using conjugate gradient for minimum
+  ! error
+  ! -------------------------------------------------------------------!
+  
+  subroutine dcgne(A, b, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: b(:)
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+    real(dp), allocatable :: y(:)
+
+    allocate(y, source = x)
+
+    ! Solve the new system A^T A x = A^T b
+    call cg(matmul(A,transpose(A)), y, max_it, &
+         & max_tol, x, iter, tol, flag)
+
+    x = matmul(transpose(A), y)
+    
+    deallocate(y)
+    
+  end subroutine dcgne
+  
+  !-------------------------------------------------------------------!
+  ! Solve the linear system using conjugate gradient for minimum
+  ! residual
+  ! -------------------------------------------------------------------!
+  
+  subroutine dcgnr(A, b, max_it, max_tol, x, iter, tol, flag)
+
+    real(dp), intent(in) :: A(:,:)
+    real(dp), intent(in) :: b(:)
+    integer , intent(in) :: max_it
+    real(dp), intent(in) :: max_tol
+
+    real(dp), intent(inout) :: x(:)
+    integer , intent(out)   :: iter
+    real(dp), intent(out)   :: tol
+    integer , intent(out)   :: flag
+
+    ! Solve the new system A^T A x = A^T b
+    call cg(matmul(transpose(A),A), matmul(transpose(A),b), max_it, &
+         & max_tol, x, iter, tol, flag)
+    
+  end subroutine dcgnr
 
   !-------------------------------------------------------------------!
   ! Solve the linear system using conjugate gradient method
