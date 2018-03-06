@@ -1,5 +1,9 @@
 module system
 
+  implicit none
+  private
+  public :: assemble_system1, assemble_system2
+
 contains 
   
   !---------------------------------------------------------------------!
