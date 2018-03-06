@@ -149,7 +149,47 @@
     interval $(1 , 2)$.  Estimate the number of CGNR iteration required
     to reduce the relative residual by a factor of $10^{-4}$.}
   
-\end{homeworkProblem}
+  \medskip
+
+  Let $m$ be the number of \underline{pure conjugate gradient}
+  iterations required to reduce the error to $\epsilon=10^{-4}$ of the
+  initial error.  We have
+  $$ ||e||_{A}^{m+1} \le \left( \dfrac{\sqrt{\kappa(A)}-1}{\sqrt{\kappa(A)}+1} \right)^{m+1} ||e||_{A}^{0} $$
+
+  Taking logarithm on both sides:
+  $$ (m + 1) \ln \left( \dfrac{\sqrt{\kappa(A)}-1}{\sqrt{\kappa(A)}+1}
+  \right) \ge \ln \left( {\dfrac{||e||_{A}^{m+1}}{||e||_{A}^{0}}}
+  \right)
+  $$ 
+
+  Rearrange to find the unknown $m$
+  $$
+  m \ge \dfrac{\ln {\epsilon}}{\left( \dfrac{\sqrt{\kappa(A)}-1}{\sqrt{\kappa(A)}+1} \right)} - 1
+  $$ 
+
+  Now, modifying this relation for \textit{CGNE} method gives the
+  following:
+  $$
+  m \ge \dfrac{\ln {\epsilon}}{\left( \dfrac{\sqrt{\kappa(A^TA)}-1}{\sqrt{\kappa(A^TA)}+1} \right)} - 1
+  $$ 
+
+  Using the relation $\kappa(A)^2 \approx \kappa(A^TA)$, for
+  general matrix $A$, one gets
+
+  $$
+  m \ge \dfrac{\ln {\epsilon}}{\left( \dfrac{{\kappa(A)}-1}{{\kappa(A)}+1} \right)} - 1
+  $$ 
+
+  This is same as the number of iterations required for \emph{steepest
+    descent method}. In this case, the condition number $\kappa(A^TA)
+  \approx \dfrac{|\lambda_{max}|^2}{|\lambda_{min}|^2} = \dfrac{4}{1}
+  = 4$.  The required relative reduction in error is $10^{-4}$. Using
+  this information
+  $$
+  m \ge \dfrac{\ln {10^{-4}}}{\ln \dfrac{\sqrt{4}-1}{\sqrt{4}+1}} - 1 = 8.38 \approx 9
+  $$ 
+
+  \end{homeworkProblem}
 
 \pagebreak
 
