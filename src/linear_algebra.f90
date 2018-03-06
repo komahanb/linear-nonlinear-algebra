@@ -32,7 +32,7 @@ module linear_algebra
   public :: dcg, dpcg, dsd
 
   ! Solvers for non-symmetric systems
-  public :: dcgnr
+  public :: dcgnr, dcgne
 
   ! Module parameters  
   complex(dp), parameter :: i_ = (0, 1)
@@ -152,15 +152,11 @@ contains
     real(dp), intent(out)   :: tol
     integer , intent(out)   :: flag
 
-    real(dp), allocatable :: y(:)
-
-    allocate(y, source = x)
-
     ! Solve the new system A^T A x = A^T b
-    call dcg(matmul(A,transpose(A)), y, max_it, &
+    call dcg(matmul(A,transpose(A)), x, max_it, &
          & max_tol, x, iter, tol, flag)
 
-    x = matmul(transpose(A), y)
+    x = matmul(transpose(A), x)
     
     deallocate(y)
     
@@ -190,7 +186,7 @@ contains
   end subroutine dcgnr
 
   !-------------------------------------------------------------------!
-  ! Solve the linear system using conjugate gradient method
+  ! Solve the linear system using conjugate gradient method A A^T y = b
   !-------------------------------------------------------------------!
   
   subroutine dcg(A, b, max_it, max_tol, x, iter, tol, flag)

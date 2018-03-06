@@ -2,7 +2,7 @@ module system
 
   implicit none
   private
-  public :: assemble_system1, assemble_system2
+  public :: assemble_system1, assemble_system2, assemble_system3
 
 contains 
   
@@ -83,6 +83,42 @@ contains
 
   end subroutine assemble_system2
 
+  !-------------------------------------------------------------------!
+  !Assemble Ax = b (GMRES)
+  !-------------------------------------------------------------------!
+  
+  subroutine assemble_system3(npts, A, b, x0)
+
+    implicit none
+
+    integer, intent(in)  :: npts
+    real(8), intent(out) :: A(npts,npts)
+    real(8), intent(out) :: b(npts)
+    real(8), intent(out) :: x0(npts)
+
+    integer :: M, N
+    integer :: i, j, k
+
+    ! Zero all entries
+    A = 0.0d0
+
+    ! Size of the linear system
+    M = npts ! nrows
+    N = npts ! ncols
+
+    ! Assemble matrix
+    A(1,N) = 1.0d0
+    forall(i=2:M) A(i,i-1) = 1.0d0
+
+    ! Assemble right hand side
+    b = 0.0d0
+    b(1) = 1.0d0
+
+    ! Initial guess
+    x0 = 0.0d0
+
+  end subroutine assemble_system3
+
 end module system
 
 !!$program test
@@ -91,14 +127,14 @@ end module system
 !!$
 !!$  implicit none
 !!$
-!!$  integer, parameter :: npts = 6
+!!$  integer, parameter :: npts = 5
 !!$  real(8), parameter :: max_tol = 1.0d-8
 !!$  integer, parameter :: max_it = 100000
 !!$  real(8) :: x(npts), b(npts), A(npts,npts), P(npts, npts)
 !!$  integer :: iter, flag, i, j
 !!$  real(8) :: tol
 !!$
-!!$  call assemble_system2(npts, A, b, x)
+!!$  call assemble_system3(npts, A, b, x)
 !!$  do i = 1,npts
 !!$     write(*,*) ( A(i,j), j=1,npts )
 !!$  enddo

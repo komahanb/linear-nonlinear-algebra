@@ -4,15 +4,13 @@
 
 program test
 
- 
-
   implicit none
 
-  call check_cgne
+  call check_solvers
 
 end program test
 
-subroutine check_cgne
+subroutine check_solvers
 
   use linear_algebra
   use system
@@ -33,9 +31,9 @@ subroutine check_cgne
     x(:,1) = solve(A,b)
 
     ! Solve using CGNE
-!!$    call assemble_system1(npts, A, b, x(:,2))
-!!$    call dcgne(A, b, max_it, max_tol, x(:,2), iter, tol, flag)
-!!$    print *, 'cgne', tol, iter
+    call assemble_system1(npts, A, b, x(:,2))
+    call dcgne(A, b, max_it, max_tol, x(:,2), iter, tol, flag)
+    print *, 'cgne', tol, iter
 
     ! Solve using CGNR
     call assemble_system1(npts, A, b, x(:,3))
@@ -44,7 +42,7 @@ subroutine check_cgne
 
     open(11, file='system1.dat')
     do i = 1, npts
-       ! x, exact, xcg, xpcg
+       ! exact, cgne, cgnr
        write(11, *) x(i,1), x(i,2), x(i,3)
     end do
     close(11)
@@ -65,7 +63,7 @@ subroutine check_cgne
     x(:,1) = solve(A,b)
 
     ! Solve using CGNE
-!!$    call assemble_system1(npts, A, b, x(:,2))
+!!$    call assemble_system2(npts, A, b, x(:,2))
 !!$    call dcgne(A, b, max_it, max_tol, x(:,2), iter, tol, flag)
 !!$    print *, 'cgne', tol, iter
 
@@ -76,11 +74,11 @@ subroutine check_cgne
 
     open(11, file='system2.dat')
     do i = 1, npts
-       ! x, exact, xcg, xpcg
+       ! exact, cgne, cgnr
        write(11, *) x(i,1), x(i,2), x(i,3)
     end do
     close(11)
 
   end block system2
 
-end subroutine check_cgne
+end subroutine check_solvers
