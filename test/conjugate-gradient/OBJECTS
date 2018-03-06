@@ -1,2 +1,2 @@
 objects=\
-test_conjugate.o
+test.o

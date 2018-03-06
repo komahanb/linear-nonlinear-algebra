@@ -1,2 +1,2 @@
 objects=\
-test_classical.o
+test.o
