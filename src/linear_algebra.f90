@@ -157,7 +157,7 @@ contains
     allocate(y, source = x)
 
     ! Solve the new system A^T A x = A^T b
-    call cg(matmul(A,transpose(A)), y, max_it, &
+    call dcg(matmul(A,transpose(A)), y, max_it, &
          & max_tol, x, iter, tol, flag)
 
     x = matmul(transpose(A), y)
@@ -184,7 +184,7 @@ contains
     integer , intent(out)   :: flag
 
     ! Solve the new system A^T A x = A^T b
-    call cg(matmul(transpose(A),A), matmul(transpose(A),b), max_it, &
+    call dcg(matmul(transpose(A),A), matmul(transpose(A),b), max_it, &
          & max_tol, x, iter, tol, flag)
     
   end subroutine dcgnr
