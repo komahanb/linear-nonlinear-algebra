@@ -27,7 +27,7 @@ subroutine check_solvers
     real(8) :: tol
 
     ! Solve using LU factorization
-    call assemble_system1(npts, A, b, x(:,2))
+    call assemble_system1(npts, A, b, x(:,1))
     x(:,1) = solve(A,b)
 
     ! Solve using CGNE
@@ -59,13 +59,13 @@ subroutine check_solvers
     real(8) :: tol
 
     ! Solve using LU factorization
-    call assemble_system2(npts, A, b, x(:,2))
+    call assemble_system2(npts, A, b, x(:,1))
     x(:,1) = solve(A,b)
 
     ! Solve using CGNE
-!!$    call assemble_system2(npts, A, b, x(:,2))
-!!$    call dcgne(A, b, max_it, max_tol, x(:,2), iter, tol, flag)
-!!$    print *, 'cgne', tol, iter
+    call assemble_system2(npts, A, b, x(:,2))
+    call dcgne(A, b, max_it, max_tol, x(:,2), iter, tol, flag)
+    print *, 'cgne', tol, iter
 
     ! Solve using CGNR
     call assemble_system2(npts, A, b, x(:,3))

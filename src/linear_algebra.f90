@@ -152,13 +152,10 @@ contains
     real(dp), intent(out)   :: tol
     integer , intent(out)   :: flag
 
-    ! Solve the new system A^T A x = A^T b
-    call dcg(matmul(A,transpose(A)), x, max_it, &
+    ! Solve the new system AA^T y = b ; x = A^T y
+    call dcg(matmul(A, transpose(A)), b, max_it, &
          & max_tol, x, iter, tol, flag)
-
     x = matmul(transpose(A), x)
-    
-    deallocate(y)
     
   end subroutine dcgne
   
