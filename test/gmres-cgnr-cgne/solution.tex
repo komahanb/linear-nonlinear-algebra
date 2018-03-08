@@ -244,6 +244,24 @@
       why.
     \end{enumerate}
   }
+
+  \paragraph{a. A is normal}
+
+  The square matrix $A$ is a $N \times N$ block-diagonal matrix with
+  $2 \times 2$ blocks. It is normal as $AA^T = A^TA$.
+
+  \paragraph{b. Positive definite?}
+
+  The eigenvalues are $\pm i$. Since $A$ is normal, the singular
+  values are the modulii of the eigenvalues, which turns out to be 1
+  and 1.
+
+  \paragraph{c. Convergence}
+
+  The convergence of CGNE depends only on the singular values of $A$
+  (not on the eigenvalues of $A$).  It converges in one step if all the
+  singular values of A are equal, which is true in this case. Thus it is ideal to use CGNE
+  for this problem.
   
 \end{homeworkProblem}
 
