@@ -245,22 +245,24 @@
     \end{enumerate}
   }
 
-  \paragraph{a. A is normal}
+  \paragraph{a. Is $A$ normal?}
 
-  The square matrix $A$ is a $N \times N$ block-diagonal matrix with
-  $2 \times 2$ blocks. It is normal as $AA^T = A^TA$.
+  The square matrix $A$ is a $n \times n$ block-diagonal matrix with
+  $2 \times 2$ blocks. It is normal as $AA^T = A^TA$. We can easily
+  see that $AA^T = A^TA = I_{n\times n}$, for $n = 2, 4 \ldots$.
 
   \paragraph{b. Positive definite?}
 
-  The eigenvalues are $\pm i$. Since $A$ is normal, the singular
-  values are the modulii of the eigenvalues, which turns out to be 1
-  and 1.
-
+  The matrix is not positive-definite. Consider an arbitrary non-zero
+  vector $x = [1 1]^T$ and compute $x^TAx$ which turns out to be
+  zero. Therefore the matrix is not positive definite.
+ 
   \paragraph{c. Convergence}
-
-  The convergence of CGNE depends only on the singular values of $A$
-  (not on the eigenvalues of $A$).  It converges in one step if all the
-  singular values of A are equal, which is true in this case. Thus it is ideal to use CGNE
+  The eigenvalues are $\pm i$. The singular values of $A$ are 1 (of
+  multiplicity $n$).  The convergence of CGNE depends only on the
+  singular values of $A$ (not on the eigenvalues of $A$).  It
+  converges in \underline{one step} if all the singular values of A
+  are equal, which is true in this case. Thus it is ideal to use CGNE
   for this problem.
   
 \end{homeworkProblem}
@@ -268,8 +270,8 @@
 \pagebreak
 
 \begin{homeworkProblem}
-  \emph{Write your code of CGNE to solve two $n \times n$ linear systems $Ax=b$
-    and $By=b$ where
+  \emph{Write your code of CGNE to solve two $n \times n$ linear
+    systems $Ax=b$ and $By=b$ where
     $$
     A = 
     \begin{bmatrix} 
@@ -303,6 +305,71 @@
     \end{bmatrix}.
     $$ Compute the solution with $n = 1000$. Comment on your results.
   }
+
+  \paragraph{Solution:}~\smallskip
+  
+  \begin{table}[H]
+    \caption{CGNE/\textbf{CGNR} with \underline{$x^{0}=0$} and tolerance of $10^{-8}$.} \medskip 
+    \centering
+    \begin{tabular}{c|c|c}
+      \toprule
+      case   &  $Ax=b$  & $By=b$ \\
+      \midrule
+      solution & $x=[0,1,0,\ldots,0]^T$ & $y=[1,0,0,\ldots,0]^T$ \\
+      number of iterations & 2/\textbf{2} & 1/\textbf{1} \\
+      \bottomrule
+    \end{tabular}
+    \label{tab:summary1}
+  \end{table}
+
+  \begin{minipage}{\textwidth}
+    \begin{table}[H]
+      \caption{CGNE/\textbf{CGNR} with \underline{$x^{0}=10^{-2}$} and tolerance of $10^{-8}$.} \medskip 
+      \centering
+      \begin{tabular}{c|c|c}
+        \toprule case & $Ax=b$ & $By=b$ \\ \midrule
+        solution\footnote{I have replaced very small entries in the
+          solution vector close to zero with 0 for cleaner
+          presentation.}  & $x=[0,1,0,\ldots,0]^T$ &
+        $y=[1,0,0,\ldots,0]^T$ \\ number of iterations & 3/\textbf{3} & 46417/\textbf{45055}
+        \\ \bottomrule
+      \end{tabular}
+      \label{tab:summary2}
+    \end{table}
+  \end{minipage}
+
+\begin{itemize}
+\item As it can be seen from Table~\ref{tab:summary1} and
+  Table~\ref{tab:summary2}, the CGNE (and also CGNR) method takes just
+  a few iterations (2 or 3) to converge to the solution for the first
+  linear system $Ax=b$. This is due to the nature of the singular
+  values of the system $A$, reflecting in terms of convergence.  For
+  $Ax=b$ the range of singular values are $[0.618,1.618]$, which is
+  narrow and therefore better convergence.
+
+\item For the second linear system $By=b$, we encounter an encounter
+  an interesting scenario where it takes just one iteration to
+  converge as shown in the first Table~\ref{tab:summary1}. This has
+  happened only because we picked the $x^{0} = 0 \rightarrow r^0 = b -
+  A (0) = b$ as the initial guess and the iteration stopped right
+  away. However, this lucky choice of initial guess is not to be
+  mistaken for the convergence properties of CGNE/CGNR. This becomes
+  evident with another intial vector $x^{0}$ as shown in
+  Table~\ref{tab:summary2}, where it takes substantially more
+  iterations for these methods to converge to the specified tolerance.
+  The eigenvalues are of $B$ are all just 1's (1000 in multiplicity).
+  The distribution of singular values is in a wider range of
+  $[2\times10^{-3}, 500]$ theoretically. As noted in the previous
+  problem, the singular values of the matrix $B$ drives the
+  convergence of the CGNE/CGNR method. The actual singular matrix of
+  the values of the $1000 \times 1000$ matrix is calculated to have
+  the range $[2 \times 10^{-3}, 499.0]$ verifying the theoretical
+  estimates. This wide spread of the singular values affects
+  convergence.
+
+\item CGNE and CGNR exhibit similar performances
+\end{itemize}
+
 \end{homeworkProblem}
 
 \end{document}

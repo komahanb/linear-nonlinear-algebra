@@ -124,19 +124,27 @@ end module system
 !!$program test
 !!$
 !!$  use system 
+!!$  use linear_algebra
 !!$
 !!$  implicit none
 !!$
-!!$  integer, parameter :: npts = 5
+!!$  integer, parameter :: npts = 1000
 !!$  real(8), parameter :: max_tol = 1.0d-8
 !!$  integer, parameter :: max_it = 100000
 !!$  real(8) :: x(npts), b(npts), A(npts,npts), P(npts, npts)
 !!$  integer :: iter, flag, i, j
 !!$  real(8) :: tol
+!!$  complex(8) :: eigs(npts)
 !!$
-!!$  call assemble_system3(npts, A, b, x)
-!!$  do i = 1,npts
-!!$     write(*,*) ( A(i,j), j=1,npts )
-!!$  enddo
+!!$  call assemble_system1(npts, A, b, x)
+!!$  !do i = 1,npts
+!!$  !   write(*,*) ( A(i,j), j=1,npts )
+!!$  !enddo
+!!$
+!!$  eigs = sqrt(eigvals(matmul(A, transpose(A)))       )
+!!$  !do i = 1, npts
+!!$ !    !print *, realpart(eigs(i)), imagpart(eigs(i)), abs(eigs(i))
+!!$ ! end do
+!!$  print *, maxval(realpart(eigs)), minval(realpart(eigs))
 !!$
 !!$end program test

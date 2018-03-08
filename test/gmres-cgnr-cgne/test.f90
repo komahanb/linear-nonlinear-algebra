@@ -15,7 +15,7 @@ subroutine check_solvers
   use linear_algebra
   use system
  
-  implicit none
+  implicit none  
   
   system1 : block
 
@@ -43,12 +43,12 @@ subroutine check_solvers
     open(11, file='system1.dat')
     do i = 1, npts
        ! exact, cgne, cgnr
-       write(11, *) x(i,1), x(i,2), x(i,3)
+       write(11, *) i, x(i,1), x(i,2), x(i,3)
     end do
     close(11)
 
   end block system1
-  
+
   system2 : block
 
     integer, parameter :: npts = 1000
@@ -57,6 +57,7 @@ subroutine check_solvers
     real(8) :: x(npts,3), b(npts), A(npts,npts)
     integer :: iter, flag, i, j
     real(8) :: tol
+    complex(8) :: eigs(npts)
 
     ! Solve using LU factorization
     call assemble_system2(npts, A, b, x(:,1))
@@ -75,7 +76,7 @@ subroutine check_solvers
     open(11, file='system2.dat')
     do i = 1, npts
        ! exact, cgne, cgnr
-       write(11, *) x(i,1), x(i,2), x(i,3)
+       write(11, *) i, x(i,1), x(i,2), x(i,3)
     end do
     close(11)
 
