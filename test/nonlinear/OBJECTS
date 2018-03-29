@@ -1,0 +1,4 @@
+objects=\
+physics_interface.o \
+static_physics_interface.o \
+test.o

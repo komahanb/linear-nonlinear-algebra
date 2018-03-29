@@ -34,6 +34,7 @@ script:
   - cd test/jacobi-seidel-sor && make && ./run && cd - ;
   - cd test/conjugate-gradient && make && ./run && cd - ;
   - cd test/gmres-cgnr-cgne && make && ./run && cd - ;
+  - cd test/nonlinear && make && ./run && cd - ;
 
 after_success:
 - coveralls
