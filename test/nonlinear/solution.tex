@@ -1,0 +1,216 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{fancyhdr}
+\usepackage{extramarks}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage[plain]{algorithm}
+\usepackage{algpseudocode}
+\usepackage{fancyvrb}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usetikzlibrary{automata,positioning}
+
+%
+% Basic Document Settings
+%
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+\linespread{1.1}
+
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName}
+\chead{\hmwkClass\ : \hmwkTitle}
+\rhead{\firstxmark}
+\lfoot{\lastxmark}
+\cfoot{\thepage}
+
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+\setlength\parindent{0pt}
+
+%
+% Create Problem Sections
+%
+
+\newcommand{\enterProblemHeader}[1]{
+    \nobreak\extramarks{}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+}
+
+\newcommand{\exitProblemHeader}[1]{
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \stepcounter{#1}
+    \nobreak\extramarks{Problem \arabic{#1}}{}\nobreak{}
+}
+
+\setcounter{secnumdepth}{0}
+\newcounter{partCounter}
+\newcounter{homeworkProblemCounter}
+\setcounter{homeworkProblemCounter}{1}
+\nobreak\extramarks{Problem \arabic{homeworkProblemCounter}}{}\nobreak{}
+
+%
+% Homework Problem Environment
+%
+% This environment takes an optional argument. When given, it will adjust the
+% problem counter. This is useful for when the problems given for your
+% assignment aren't sequential. See the last 3 problems of this template for an
+% example.
+%
+\newenvironment{homeworkProblem}[1][-1]{
+    \ifnum#1>0
+        \setcounter{homeworkProblemCounter}{#1}
+    \fi
+    \section{Problem \arabic{homeworkProblemCounter}}
+    \setcounter{partCounter}{1}
+    \enterProblemHeader{homeworkProblemCounter}
+}{
+    \exitProblemHeader{homeworkProblemCounter}
+}
+
+%
+% Homework Details
+%   - Title
+%   - Due date
+%   - Class
+%   - Section/Time
+%   - Instructor
+%   - Author
+%
+
+\newcommand{\hmwkTitle}{Homework\ \# 4}
+\newcommand{\hmwkDueDate}{\today}
+\newcommand{\hmwkClass}{MATH6644 Iterative Methods}
+\newcommand{\hmwkClassTime}{}
+\newcommand{\hmwkClassInstructor}{}
+\newcommand{\hmwkAuthorName}{Komahan Boopathy}
+
+%
+% Title Page
+%
+
+\title{
+    \vspace{2in}
+    \textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\
+    \normalsize\vspace{0.1in}\small{\hmwkDueDate}\\
+    %\vspace{0.1in}\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+    \vspace{3in}
+}
+
+\author{\textbf{\Large\hmwkAuthorName}}
+\date{}
+
+\renewcommand{\part}[1]{\textbf{\large Part \Alph{partCounter}}\stepcounter{partCounter}\\}
+
+%
+% Various Helper Commands
+%
+
+% Useful for algorithms
+\newcommand{\alg}[1]{\textsc{\bfseries \footnotesize #1}}
+
+% For derivatives
+\newcommand{\deriv}[1]{\frac{\mathrm{d}}{\mathrm{d}x} (#1)}
+
+% For partial derivatives
+\newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}}
+
+% Integral dx
+\newcommand{\dx}{\mathrm{d}x}
+
+% Alias for the Solution section header
+\newcommand{\solution}{\textbf{\large Solution}}
+
+% Probability commands: Expectation, Variance, Covariance, Bias
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Bias}{\mathrm{Bias}}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\pagebreak
+
+\begin{homeworkProblem}
+
+  \emph{Can the performance of Newton iteration be improved by a
+    linear change of variables?  That is, for nonsingular $N\times N$
+    matrices $A$ and $B$, can the Newton iterates for $F(x)=0$ and
+    $AF(Bx)=0$ show any performance difference when started at the same
+    initial iterate? What about the chord method?
+  }
+  
+  \medskip
+
+  Yes, its is the question of condition number of the jacobian that
+  goes into the Newton iteration.
+  
+\end{homeworkProblem}
+
+\pagebreak
+
+\begin{homeworkProblem}
+  \emph{Assume that the standard assumptions hold, that the cost of a
+    function evaluation is ${\cal{O}}(N^2)$ floating-point operations,
+    the cost of a Jacobian is ${\cal{O}}(N)$ function evaluations, and
+    that $x_0$ is near enough to $x^*$ so that the Newton iteration
+    converges quadratically to $x^*$.}
+  
+  \medskip
+
+  \paragraph{a.}
+  \emph{Estimate what is the number of iteration needed to obtain $\|e_n\| \le \epsilon \|e_0\|$, where $\epsilon$ is a small tolerance value.}
+  
+  At each Newton's iteration $n$ there is:
+  \begin{enumerate}
+  \item one function evaluation
+  \item one Jacobian evaluation
+  \end{enumerate}
+
+  \paragraph{b.}
+  \emph{What is the number of floating point operations required to get this accuracy?}
+  
+\end{homeworkProblem}
+
+\pagebreak
+
+\begin{homeworkProblem}
+
+  \emph{Answer the questions in the previous problem for the chord method.}
+
+  \medskip
+  
+\end{homeworkProblem}
+
+\pagebreak
+
+\begin{homeworkProblem}
+
+  \emph{Write the program that solves single nonlinear equations with
+    Newton's method, the chord method, and the secant method. For the
+    secant method, use $x_{-1}=0.99x_0$. Apply your program to the
+    following function/initial iterate combinations, document and
+    explain your results.}
+  \begin{enumerate}
+  \item $f(x) = 2x^2 -5, \quad x_0=10$
+  \item $f(x) = \sin x + x, \quad x_0=0.5$
+  \item $f(x) = \cos x, \quad x_0=3$
+  \end{enumerate}
+  \medskip
+
+\end{homeworkProblem}
+
+\end{document}
