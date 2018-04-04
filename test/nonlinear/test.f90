@@ -49,16 +49,45 @@ contains
     real(8) :: dfdx3(size(x),size(x))
     dfdx3(1,1) = sin(x(1))
   end function dfdx3
-  
-  function res(x)
+
+  ! Chandrasekhar H equations
+  function chandra_res(x)
+
+    real(8), intent(in) :: x(200)
+    real(8) :: chandra_res(size(x))
+
+    assemble: block
+      
+      real(8), parameter :: c = 0.9d0
+      integer, parameter :: N = 200
+      real(8) :: mui, muj, alpha, beta
+      integer :: i, j
+
+      do i = 1, N
+         mui = (dble(i) - 0.5d0)/dble(N)
+
+         ! Find the term within integral
+         alpha = 0.0d0
+         do j = 1, N
+            muj = (dble(j) - 0.5d0)/dble(N)
+            alpha = mui*x(j)/(mui+muj)
+         end do
+
+         ! Evaluate the inverse term
+         beta = 1.0d0 - c*alpha/(2.0d0*dble(N))
+
+         ! Assmble residual
+         chandra_res(i) = x(i) - 1.0d0/beta
+      end do
+
+    end block assemble
+
+  end function chandra_res
+
+  function chandra_jac(x)
     real(8), intent(in) :: x(:)
-    real(8) :: res(size(x))
-  end function res
-  
-  function jac(x)
-    real(8), intent(in) :: x(:)
-    real(8) :: jac(size(x), size(x))
-  end function jac
+    real(8) :: chandra_jac(size(x), size(x))
+  end function chandra_jac
 
 end module test_problems
 
@@ -68,7 +97,9 @@ end module test_problems
 
 program test_nonlinear
 
-  use test_problems, only : f1, f2, f3, dfdx1, dfdx2, dfdx3
+  use test_problems, only : f1, f2, f3, dfdx1, dfdx2, dfdx3, &
+       & chandra_res, chandra_jac
+  
   ! use nonlinear, only : newton
 
   implicit none

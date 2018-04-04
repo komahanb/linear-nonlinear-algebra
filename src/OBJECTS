@@ -1,3 +1,4 @@
 objects=\
 lapack.o \
-linear_algebra.o 
+linear_algebra.o \
+nonlinear_algebra.o
