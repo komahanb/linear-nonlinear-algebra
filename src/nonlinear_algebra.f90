@@ -1,5 +1,5 @@
 !=====================================================================!
-! Module that contains handy linear algebra operations using LAPACK.
+! Library of nonlinear solvers
 !=====================================================================!
 
 module nonlinear_algebra
@@ -19,7 +19,37 @@ module nonlinear_algebra
   public :: newton
 
 contains
-
-  ! Method signature
   
+  subroutine newton(F, FPRIME, tau_r, tau_a, x)
+
+    real(8), intent(in) :: tau_r, tau_a
+    real(8), intent(inout) :: x(:)
+
+    ! residual and jacobian
+    procedure :: F
+    procedure :: FRIME
+
+    ! local variables
+    real(8) :: r0 
+    real(8) :: jac(size(x),size(x))
+    real(8) :: s(size(x))
+    
+    ! Initial residual
+    r0 = norm2(F(x))
+
+    do while (norm2(F(x)) > tau_r*r0 + tau_a)
+
+       ! Compute Jacobian
+       jac = FPRIME(x)
+
+       ! Solve the linear system
+       s =  solve(jac, -F(x))
+
+       ! Apply the update
+       x = x + s
+
+    end do
+
+  end subroutine newton
+
 end module nonlinear_algebra
