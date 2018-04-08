@@ -47,7 +47,7 @@ contains
   pure function dfdx3(x)
     real(8), intent(in) :: x(:)
     real(8) :: dfdx3(size(x),size(x))
-    dfdx3(1,1) = sin(x(1))
+    dfdx3(1,1) = -sin(x(1))
   end function dfdx3
 
   ! Chandrasekhar H equations
@@ -100,13 +100,32 @@ program test_nonlinear
   use test_problems, only : f1, f2, f3, dfdx1, dfdx2, dfdx3, &
        & chandra_res, chandra_jac
   
-  ! use nonlinear, only : newton
+  use nonlinear_algebra, only : newton
 
   implicit none
 
   test_newton: block
 
-    ! Test newton solver
+    integer, parameter :: npts = 1
+    real(8), parameter :: tau_r = 1.0d-6
+    real(8), parameter :: tau_a = 1.0d-6
+    integer, parameter :: max_it = 100000
+
+    integer :: iter, flag
+    real(8) :: x(npts)
+    real(8) :: tol
+
+    x = 10.0d0
+    call newton(f1, dfdx1, tau_r, tau_a, x)
+    print *, x
+
+    x = 0.5d0
+    call newton(f2, dfdx2, tau_r, tau_a, x)
+    print *, x
+
+    x = 3.0d0
+    call newton(f3, dfdx3, tau_r, tau_a, x)
+    print *, x
 
   end block test_newton
 
