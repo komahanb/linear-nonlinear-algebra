@@ -211,6 +211,26 @@
   \end{enumerate}
   \medskip
 
+  \begin{table}[H]
+    \caption{Number of iterations taken to for the test case.}  \centering
+    \begin{tabular}{c|ccc}
+      \toprule
+      Test/Method         & Newton & Chord & Secant \\
+      \midrule
+      $f(x) = 2x^2 -5$    & 6 & & \\
+      $f(x) = \sin x + x$ & 3 & & \\
+      $f(x) = \cos x$     & 4 & & \\
+      \bottomrule
+    \end{tabular}
+    \label{tab:number_iterations}
+  \end{table}
+
+  The stopping criterion used in $10^-{-6}$.
+  
+  The chord method is only linear, and only locally convergent
+  The second method is superlinear
+  The Newton's method is quadratic
+  
 \end{homeworkProblem}
 
 \end{document}

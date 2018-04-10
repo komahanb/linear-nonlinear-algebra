@@ -96,37 +96,72 @@ end module test_problems
 !=====================================================================!
 
 program test_nonlinear
-
+  
   use test_problems, only : f1, f2, f3, dfdx1, dfdx2, dfdx3, &
        & chandra_res, chandra_jac
   
-  use nonlinear_algebra, only : newton
+  use nonlinear_algebra, only : newton, secant, chord
 
   implicit none
+  
+  integer, parameter :: npts = 1
+  real(8), parameter :: tau_r = 1.0d-6
+  real(8), parameter :: tau_a = 1.0d-6
+  integer, parameter :: maxit = 100
+  
+  integer :: iter, flag
+  real(8) :: x(npts)
+  real(8) :: tol
 
+  ! Uses proper jacobian (analytic)
   test_newton: block
 
-    integer, parameter :: npts = 1
-    real(8), parameter :: tau_r = 1.0d-6
-    real(8), parameter :: tau_a = 1.0d-6
-    integer, parameter :: max_it = 100000
-
-    integer :: iter, flag
-    real(8) :: x(npts)
-    real(8) :: tol
-
     x = 10.0d0
-    call newton(f1, dfdx1, tau_r, tau_a, x)
+    call newton(f1, dfdx1, tau_r, tau_a, maxit, x)
     print *, x
 
     x = 0.5d0
-    call newton(f2, dfdx2, tau_r, tau_a, x)
+    call newton(f2, dfdx2, tau_r, tau_a, maxit, x)
     print *, x
 
     x = 3.0d0
-    call newton(f3, dfdx3, tau_r, tau_a, x)
+    call newton(f3, dfdx3, tau_r, tau_a, maxit, x)
     print *, x
 
   end block test_newton
+
+  ! approximates jacobian with finite difference
+  test_secant: block
+
+    x = 10.0d0
+    call secant(f1, tau_r, tau_a, maxit, x)
+    print *, x
+
+    x = 0.5d0
+    call secant(f2, tau_r, tau_a, maxit, x)
+    print *, x
+
+    x = 3.0d0
+    call secant(f3, tau_r, tau_a, maxit, x)
+    print *, x
+
+  end block test_secant
+
+  ! Uses jacobian at first iteration
+  test_chord: block
+
+    x = 10.0d0
+    call chord(f1, dfdx1, tau_r, tau_a, maxit, x)
+    print *, x
+
+    x = 0.5d0
+    call chord(f2, dfdx2, tau_r, tau_a, maxit, x)
+    print *, x
+
+    x = 3.0d0
+    call chord(f3, dfdx3, tau_r, tau_a, maxit, x)
+    print *, x
+
+  end block test_chord
 
 end program test_nonlinear

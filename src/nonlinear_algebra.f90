@@ -16,15 +16,16 @@ module nonlinear_algebra
   ! all members are private by default
   private
 
-  public :: newton
+  public :: newton, chord, secant
 
 contains
   
-  subroutine newton(F, FPRIME, tau_r, tau_a, x)
+  subroutine newton(F, FPRIME, tau_r, tau_a, max_it, x)
 
     real(8), intent(in) :: tau_r, tau_a
+    integer, intent(in) :: max_it
     real(8), intent(inout) :: x(:)
-
+   
     interface
        pure function F(x)
          real(8), intent(in) ::  x(:)
@@ -40,12 +41,16 @@ contains
     real(8) :: r0 
     real(8) :: jac(size(x),size(x))
     real(8) :: s(size(x))
-
+    integer :: iter
 
     ! Initial residual
     r0 = norm2(F(x))
 
-    do while (norm2(F(x)) > tau_r*r0 + tau_a)
+    iter = 0
+    do while (norm2(F(x)) > tau_r*r0 + tau_a .and. iter .le. max_it)
+
+       ! Increment the iteration count
+       iter = iter + 1
 
        ! Compute Jacobian
        jac = FPRIME(x)
@@ -56,11 +61,124 @@ contains
        ! Apply the update
        x = x - s
 
-       ! 
-       print *, "norm", norm2(F(x)), x, s
+       ! print details
+       print *, "newton norm", norm2(F(x)), x, s
 
     end do
 
   end subroutine newton
+
+  subroutine secant(F, tau_r, tau_a,  max_it, x)
+
+    real(8), intent(in) :: tau_r, tau_a
+    integer, intent(in) :: max_it
+    real(8), intent(inout) :: x(:)
+   
+    interface
+       pure function F(x)
+         real(8), intent(in) ::  x(:)
+         real(8) :: F(size(x))
+       end function F
+       pure function FPRIME(x)
+         real(8), intent(in) :: x(:)
+         real(8) :: FPRIME(size(x),size(x))
+       end function FPRIME
+    end interface
+
+    ! local variables
+    real(8) :: r0 
+    real(8) :: jac(size(x),size(x))
+    real(8) :: s(size(x))
+    integer :: iter
+    integer :: nvars, i
+    real(8), parameter :: h = 1.0e-8
+    real(8) :: xhat(size(x))
+
+    nvars = size(x)
+    xhat = x
+    
+    ! Initial residual
+    r0 = norm2(F(x))
+
+    iter = 0
+    do while (norm2(F(x)) > tau_r*r0 + tau_a .and. iter .le. max_it)
+
+       ! Compute Jacobian with first order approx
+       do i = 1, nvars
+          
+          ! Increment the iteration count
+          iter = iter + 1
+          
+          ! Perturb x
+          xhat(i) = x(i) + h
+
+          ! Evaluate column
+          jac(:,i) = (F(xhat) - F(x))/h
+
+          ! Restore x
+          xhat(i) = x(i)
+          
+       end do
+       
+       ! Solve the linear system
+       s = solve(jac, F(x))
+
+       ! Apply the update
+       x = x - s
+
+       ! print details
+       print *, "secant norm", norm2(F(x)), x, s
+
+    end do
+
+  end subroutine secant
+  
+  subroutine chord(F, FPRIME, tau_r, tau_a, max_it, x)
+
+    real(8), intent(in) :: tau_r, tau_a
+    integer, intent(in) :: max_it
+    real(8), intent(inout) :: x(:)
+    
+    interface
+       pure function F(x)
+         real(8), intent(in) ::  x(:)
+         real(8) :: F(size(x))
+       end function F
+       pure function FPRIME(x)
+         real(8), intent(in) :: x(:)
+         real(8) :: FPRIME(size(x),size(x))
+       end function FPRIME
+    end interface
+
+    ! local variables
+    real(8) :: r0 
+    real(8) :: jac(size(x),size(x))
+    real(8) :: s(size(x))
+    integer :: iter
+
+    ! Initial residual
+    r0 = norm2(F(x))
+
+    ! Compute the jacobian once with the initial iterate
+    jac = FPRIME(x)
+
+    iter = 0
+    do while (norm2(F(x)) > tau_r*r0 + tau_a .and. iter .le. max_it )
+
+       ! Increment the iteration count
+       iter = iter + 1
+       
+       ! Solve the linear system
+       s = solve(jac, F(x))
+
+       ! Apply the update
+       x = x - s
+
+       ! print details
+       print *, "chord norm", norm2(F(x)), x, s
+
+    end do
+
+  end subroutine chord
 
 end module nonlinear_algebra
