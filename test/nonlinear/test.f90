@@ -110,7 +110,7 @@ program test_nonlinear
   integer, parameter :: maxit = 100
   
   integer :: iter, flag
-  real(8) :: x(npts)
+  real(8) :: x(npts), x0(npts)
   real(8) :: tol
 
   ! Uses proper jacobian (analytic)
@@ -134,15 +134,18 @@ program test_nonlinear
   test_secant: block
 
     x = 10.0d0
-    call secant(f1, tau_r, tau_a, maxit, x)
+    x0 = 0.99*x
+    call secant(f1, tau_r, tau_a, maxit, x0, x)
     print *, x
 
     x = 0.5d0
-    call secant(f2, tau_r, tau_a, maxit, x)
+    x0 = 0.99*x
+    call secant(f2, tau_r, tau_a, maxit, x0, x)
     print *, x
 
     x = 3.0d0
-    call secant(f3, tau_r, tau_a, maxit, x)
+    x0 = 0.99*x
+    call secant(f3, tau_r, tau_a, maxit, x0, x)
     print *, x
 
   end block test_secant
