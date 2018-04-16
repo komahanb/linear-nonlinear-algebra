@@ -20,6 +20,42 @@ module nonlinear_algebra
 
 contains
   
+  subroutine diffjac(x, F, jac)
+    
+    real(8), intent(in) :: x(:)
+    real(8), intent(inout) :: jac(:,:)
+
+    interface
+       pure function F(x)
+         real(8), intent(in) ::  x(:)
+         real(8) :: F(size(x))
+       end function F
+    end interface
+
+    integer             :: nvars, i
+    real(8), parameter  :: h = 1.0e-8
+    real(8)             :: xhat(size(x))
+
+    nvars = size(x)
+
+    xhat = x
+    
+    ! Compute Jacobian with first order approx
+    do i = 1, nvars
+
+       ! Perturb x
+       xhat(i) = x(i) + h
+
+       ! Evaluate column
+       jac(:,i) = (F(xhat) - F(x))/h
+
+       ! Restore x
+       xhat(i) = x(i)
+
+    end do
+
+  end subroutine diffjac
+
   subroutine newton(F, FPRIME, tau_r, tau_a, max_it, x)
 
     real(8), intent(in) :: tau_r, tau_a
@@ -90,11 +126,7 @@ contains
     real(8) :: jac(size(x0),size(x0))
     real(8) :: s(size(x0))
     integer :: iter
-    integer :: nvars, i
-    real(8), parameter :: h = 1.0e-8
     real(8) :: xtmp(size(x0))
-    
-    nvars = size(x0)
     
     ! Initial residual
     r0 = norm2(F(x1))
@@ -105,26 +137,6 @@ contains
 
        ! Increment the iteration count
        iter = iter + 1
-!!$
-!!$       ! Compute Jacobian with first order approx
-!!$       do i = 1, nvars
-!!$          
-!!$          ! Increment the iteration count
-!!$          iter = iter + 1
-!!$          
-!!$          ! Perturb x
-!!$          xhat(i) = x(i) + h
-!!$
-!!$          ! Evaluate column
-!!$          jac(:,i) = (F(xhat) - F(x))/h
-!!$
-!!$          ! Restore x
-!!$          xhat(i) = x(i)
-!!$          
-!!$       end do
-
-       ! Solve the linear system
-       ! s = solve(jac, F(x))
 
        ! Apply the update
        xtmp = x1 
