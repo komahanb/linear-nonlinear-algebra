@@ -120,8 +120,8 @@ program test_nonlinear
 
   implicit none
   
-  real(8), parameter :: tau_r = 1.0d-10
-  real(8), parameter :: tau_a = 1.0d-10
+  real(8), parameter :: tau_r = 1.0d-6
+  real(8), parameter :: tau_a = 1.0d-6
   integer, parameter :: maxit = 100
   
   integer :: iter, flag
@@ -135,22 +135,22 @@ program test_nonlinear
 
     print *, "Chandrasekhar Equation using Newton method"
   
-    x(:,1) = 100.0d0
+    x(:,1) = 2.0d0
     call newton(chandra_res, chandra_jac, tau_r, tau_a, maxit, x(:,1))
     !print *, x(:,1)
 
     print *, "Chandrasekhar Equation using chord method"
-    x(:,2) = 100.0d0
+    x(:,2) = 1.0d0
     call chord(chandra_res, chandra_jac, tau_r, tau_a, maxit, x(:,2))
     !print *, x(:,2)
 
     print *, "Chandrasekhar Equation using fixed point method"
-    x(:,3) = 100.0d0
+    x(:,3) = 1.0d0
     call fixed_point(chandra_res, tau_r, tau_a, maxit, x(:,3))
     !print *, x(:,3)
 
     print *, "Chandrasekhar Equation using shamanskii method"
-    x(:,4) = 100.0d0
+    x(:,4) = 1.0d0
     call shamanskii(chandra_res, chandra_jac, 2, tau_r, tau_a, maxit, x(:,4))
     !print *, x(:,4)
 
@@ -168,7 +168,7 @@ program test_nonlinear
 
     print *, "function 1 using secant method"
     x = 10.0d0
-    x0 = 0.99*x
+    x0 = 0.99d0*x
     call secant(f1, tau_r, tau_a, maxit, x0, x)
     print *, x
 
@@ -191,7 +191,7 @@ program test_nonlinear
 
     print *, "function 2 using secant method"
     x = 0.5d0
-    x0 = 0.99*x
+    x0 = 0.99d0*x
     call secant(f2, tau_r, tau_a, maxit, x0, x)
     print *, x
 
@@ -214,7 +214,7 @@ program test_nonlinear
 
     print *, "function 3 using secant method"
     x = 3.0d0
-    x0 = 0.99*x
+    x0 = 0.99d0*x
     call secant(f3, tau_r, tau_a, maxit, x0, x)
     print *, x
 
