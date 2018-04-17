@@ -53,17 +53,20 @@ contains
   ! Chandrasekhar H equations
   function chandra_res(x)
 
-    real(8), intent(in) :: x(200)
-    real(8) :: chandra_res(size(x))
+    real(8), intent(in) :: x(:)
+    real(8)  :: chandra_res(size(x))    
+    integer, parameter  :: N = 200
+    real(8), parameter  :: c = 0.9d0
 
+    if ( n .ne. 200) stop "variable-mismatch"
+    
     assemble: block
       
-      real(8), parameter :: c = 0.9d0
-      integer, parameter :: N = 200
       real(8) :: mui, muj, alpha, beta
       integer :: i, j
 
       do i = 1, N
+         
          mui = (dble(i) - 0.5d0)/dble(N)
 
          ! Find the term within integral
@@ -78,15 +81,27 @@ contains
 
          ! Assmble residual
          chandra_res(i) = x(i) - 1.0d0/beta
+         
       end do
 
     end block assemble
 
   end function chandra_res
 
+  !===================================================================!
+  ! Finite difference approximation for jacobian
+  !===================================================================!
+  
   function chandra_jac(x)
+
+    use nonlinear_algebra, only : diffjac
+    
     real(8), intent(in) :: x(:)
-    real(8) :: chandra_jac(size(x), size(x))
+    real(8) :: chandra_jac(size(x),size(x))
+    integer, parameter :: N = 200
+    
+    call diffjac(x, chandra_res, chandra_jac)
+    
   end function chandra_jac
 
 end module test_problems
@@ -100,71 +115,114 @@ program test_nonlinear
   use test_problems, only : f1, f2, f3, dfdx1, dfdx2, dfdx3, &
        & chandra_res, chandra_jac
   
-  use nonlinear_algebra, only : newton, secant, chord
+  use nonlinear_algebra, only : newton, secant, chord, fixed_point, &
+       & shamanskii
 
   implicit none
   
-  integer, parameter :: npts = 1
-  real(8), parameter :: tau_r = 1.0d-6
-  real(8), parameter :: tau_a = 1.0d-6
+  real(8), parameter :: tau_r = 1.0d-10
+  real(8), parameter :: tau_a = 1.0d-10
   integer, parameter :: maxit = 100
   
   integer :: iter, flag
-  real(8) :: x(npts), x0(npts)
   real(8) :: tol
 
-  ! Uses proper jacobian (analytic)
-  test_newton: block
+  ! Test nonlinear solvers on chandrasekhar method
+  test_chandra: block
 
+    integer, parameter :: npts = 200
+    real(8) :: x(npts,4)
+
+    print *, "Chandrasekhar Equation using Newton method"
+  
+    x(:,1) = 100.0d0
+    call newton(chandra_res, chandra_jac, tau_r, tau_a, maxit, x(:,1))
+    !print *, x(:,1)
+
+    print *, "Chandrasekhar Equation using chord method"
+    x(:,2) = 100.0d0
+    call chord(chandra_res, chandra_jac, tau_r, tau_a, maxit, x(:,2))
+    !print *, x(:,2)
+
+    print *, "Chandrasekhar Equation using fixed point method"
+    x(:,3) = 100.0d0
+    call fixed_point(chandra_res, tau_r, tau_a, maxit, x(:,3))
+    !print *, x(:,3)
+
+    print *, "Chandrasekhar Equation using shamanskii method"
+    x(:,4) = 100.0d0
+    call shamanskii(chandra_res, chandra_jac, 2, tau_r, tau_a, maxit, x(:,4))
+    !print *, x(:,4)
+
+  end block test_chandra
+
+  test_f1 : block
+
+    integer, parameter :: npts = 1
+    real(8) :: x(npts), x0(npts)
+
+    print *, "function 1 using newton method"
     x = 10.0d0
     call newton(f1, dfdx1, tau_r, tau_a, maxit, x)
     print *, x
 
-    x = 0.5d0
-    call newton(f2, dfdx2, tau_r, tau_a, maxit, x)
-    print *, x
-
-    x = 3.0d0
-    call newton(f3, dfdx3, tau_r, tau_a, maxit, x)
-    print *, x
-
-  end block test_newton
-
-  ! approximates jacobian with finite difference
-  test_secant: block
-
+    print *, "function 1 using secant method"
     x = 10.0d0
     x0 = 0.99*x
     call secant(f1, tau_r, tau_a, maxit, x0, x)
     print *, x
 
+    print *, "function 1 using chord method"
+    x = 10.0d0
+    call chord(f1, dfdx1, tau_r, tau_a, maxit, x)
+    print *, x
+
+  end block test_f1
+
+  test_f2: block
+
+    integer, parameter :: npts = 1
+    real(8) :: x(npts), x0(npts)
+
+    print *, "function 2 using newton method"
+    x = 0.5d0
+    call newton(f2, dfdx2, tau_r, tau_a, maxit, x)
+    print *, x
+
+    print *, "function 2 using secant method"
     x = 0.5d0
     x0 = 0.99*x
     call secant(f2, tau_r, tau_a, maxit, x0, x)
     print *, x
 
+    print *, "function 2 using chord method"
+    x = 0.5d0
+    call chord(f2, dfdx2, tau_r, tau_a, maxit, x)
+    print *, x
+
+  end block test_f2
+  
+  test_f3: block
+
+    integer, parameter :: npts = 1
+    real(8) :: x(npts), x0(npts)
+
+    print *, "function 3 using newton method"
+    x = 3.0d0
+    call newton(f3, dfdx3, tau_r, tau_a, maxit, x)
+    print *, x
+
+    print *, "function 3 using secant method"
     x = 3.0d0
     x0 = 0.99*x
     call secant(f3, tau_r, tau_a, maxit, x0, x)
     print *, x
 
-  end block test_secant
-
-  ! Uses jacobian at first iteration
-  test_chord: block
-
-    x = 10.0d0
-    call chord(f1, dfdx1, tau_r, tau_a, maxit, x)
-    print *, x
-
-    x = 0.5d0
-    call chord(f2, dfdx2, tau_r, tau_a, maxit, x)
-    print *, x
-
+    print *, "function 3 using chord method"
     x = 3.0d0
     call chord(f3, dfdx3, tau_r, tau_a, maxit, x)
     print *, x
 
-  end block test_chord
+  end block test_f3
 
 end program test_nonlinear
