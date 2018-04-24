@@ -145,6 +145,78 @@
 
 \pagebreak
 
+\section{Preconditioned Conjugate Gradient}
+
+\begin{abstract}
+  We explore the solution of symmetric positive definite
+  Toeplitz systems by conjugate gradient methods using two different
+  circulant preconditioners.
+\end{abstract}
+
+\subsection{Introduction}
+
+Toeplitz matrices arise in signal processing and time-series
+analysis. The linear system $Ax =b$ is defined completely by $n$
+numbers instead of $n^2$ numbers.
+
+\begin{itemize}
+  
+\item One of the core ideas of using iterative methods for solving
+  Toeplitz system is based on the fact that matrix vector products
+  $Av$ can be computed efficiently in ${\cal{O}}(n \log n)$ floating
+  point operations via the Fast Fourier Transform algorithm
+  (compared to ${\cal{O}}(n^2)$) for regular matrix-vector
+  products. Recall that the iterative methods are centered upon on
+  being able to $(i)$ compute the norms $(ii)$ compute matrix-vector
+  products. The success of any iterative methods resides in these
+  two operations.
+  
+\end{itemize}
+
+A good choice of preconditioner $C$ will accelerate the solution of
+iterative algotithms such as Conjugate-Gradient method.  The
+convergence rate of the conjugate gradient method is dependent on the
+eigenspectrum of $C^{-1}A$. A circulant preconditioner $C$ for
+toeplitz system $A$ is such that except for the largest and smallest
+eigenvalue, all other eigenvalues are clustered around 1. The
+convergence of conjugate gradient method is not solely dependent on
+the extreme values unlike ordinary classical iteration methods. This
+greatly accelerates the convergence of conjugate gradient method for
+Toeplitz system with circulant preconditoners.
+
+\begin{itemize}
+\item Circulant preconditioners can be diagonalized (which
+  effectively means that they are solved) using FFT in ${\cal{O}}(n
+  \log n)$ operations.
+\end{itemize}
+
+%  A matrix $C$ is said to diagonalize a matrix $A$ if $$ D = C^{-1} A
+%  C $$
+
+\subsection{Preconditioners}
+
+We explore the suitability of two preconditioners for Topelitz
+systems.
+
+\subsubsection{G. Strang's Circulant Preconditioner}
+
+The form of GS preditioner is $$ C = $$
+
+\subsubsection{T. Chan's Circulant Preconditioner}
+
+The form of TC preditioner is $$ C = $$
+
+\subsection{Summary}
+
+T. Chan's new preconditioner is
+easy to compute and performs better than G. Strang's preconditioner
+in terms of reducing the condition number of $C^{-1}A$ and
+comparably in terms of clustering the eigenspectrum around unity.
+
+%\end{homeworkProblem}
+
+\clearpage
+
 \begin{homeworkProblem}
 
   Consider the discrete Chandrasekhar H-equation
@@ -196,114 +268,114 @@
          newton  1   0.0000000000000000  
 \end{verbatim}
 
-  The number of iterations taken by each method to solve
-  this equation are tabulated in Table~\ref{tab:prob2_iterations}.
-  
-  \begin{table}[H]
-    \caption{Number of iterations for solving Chandrasekhar H-equation.}
-    \medskip
-    \centering
-    \begin{tabular}{c|c|cc}
-      \toprule
-      No. & Method & Iterations \\
-      \midrule
-      1 & Fixed point &  \\
-      2 & Chord       &  \\
-      3 & Newton      &  \\
-      4 & Shamanskii  &  \\
-      \bottomrule
-    \end{tabular}
-    \label{tab:prob2_iterations}
-  \end{table}
+The number of iterations taken by each method to solve
+this equation are tabulated in Table~\ref{tab:prob2_iterations}.
 
-  \begin{table}[H]
-    \caption{Number of iterations for solving Chandrasekhar H-equation.}
-    \medskip
-    \centering
-    \begin{tabular}{c|c|cccc|c}
-      \toprule
-      No. & Method & \# F  & \# Jacobian & \# Factor & \# ApplyFactor & \# Total \\
-      \midrule
-      1 & Fixed point &&&&& \\
-      2 & Chord       &&&&& \\
-      3 & Newton      &&&&&  \\
-      4 & Shamanskii  &&&&&  \\
-      \bottomrule
-    \end{tabular}
-    \label{tab:prob2_cost}
-  \end{table}
+\begin{table}[H]
+  \caption{Number of iterations for solving Chandrasekhar H-equation.}
+  \medskip
+  \centering
+  \begin{tabular}{c|c|cc}
+    \toprule
+    No. & Method & Iterations \\
+    \midrule
+    1 & Fixed point &  \\
+    2 & Chord       &  \\
+    3 & Newton      &  \\
+    4 & Shamanskii  &  \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:prob2_iterations}
+\end{table}
 
-  Figure~\ref{} shows the plot of solution obtained using these four
-  methods.
-  \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{dummy}
-    \caption{Solution of Chandrasekhar H-equation obtained using different solution method.}
-    \label{fig:chandra_solution}
-  \end{figure}
-  
-  
+\begin{table}[H]
+  \caption{Number of iterations for solving Chandrasekhar H-equation.}
+  \medskip
+  \centering
+  \begin{tabular}{c|c|cccc|c}
+    \toprule
+    No. & Method & \# F  & \# Jacobian & \# Factor & \# ApplyFactor & \# Total \\
+    \midrule
+    1 & Fixed point &&&&& \\
+    2 & Chord       &&&&& \\
+    3 & Newton      &&&&&  \\
+    4 & Shamanskii  &&&&&  \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:prob2_cost}
+\end{table}
+
+Figure~\ref{} shows the plot of solution obtained using these four
+methods.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{dummy}
+  \caption{Solution of Chandrasekhar H-equation obtained using different solution method.}
+  \label{fig:chandra_solution}
+\end{figure}
+
+
 \end{homeworkProblem}
 
 \end{document}
 
-  \emph{Write the program that solves single nonlinear equations with
-    Newton's method, the chord method, and the secant method. For the
-    secant method, use $x_{-1}=0.99x_0$. Apply your program to the
-    following function/initial iterate combinations, document and
-    explain your results.}
-  \begin{enumerate}
-  \item $f(x) = 2x^2 -5, \quad x_0=10$
-  \item $f(x) = \sin x + x, \quad x_0=0.5$
-  \item $f(x) = \cos x, \quad x_0=3$
-  \end{enumerate}
-  \medskip
+\emph{Write the program that solves single nonlinear equations with
+  Newton's method, the chord method, and the secant method. For the
+  secant method, use $x_{-1}=0.99x_0$. Apply your program to the
+  following function/initial iterate combinations, document and
+  explain your results.}
+\begin{enumerate}
+\item $f(x) = 2x^2 -5, \quad x_0=10$
+\item $f(x) = \sin x + x, \quad x_0=0.5$
+\item $f(x) = \cos x, \quad x_0=3$
+\end{enumerate}
+\medskip
 
-  \begin{table}[H]
-    \caption{Number of iterations taken to for the test case.} \medskip \centering
-    \begin{tabular}{c|c|ccc}
-      \toprule
-     Case & Test/Method         & Newton & Chord & Secant \\
-      \midrule
-     a & $f(x) = 2x^2 -5$    & 6 & 8  & 64  \\\midrule
-     b & $f(x) = \sin x + x$ & 3 & 3  & --   \\\midrule
-     c & $f(x) = \cos x$     & 4 & --  & -- \\
-      \bottomrule
-    \end{tabular}
-    \label{tab:number_iterations}
-  \end{table}
-  The stopping criterion used in $\tau_r=\tau_a=10^{-6}$.
+\begin{table}[H]
+  \caption{Number of iterations taken to for the test case.} \medskip \centering
+  \begin{tabular}{c|c|ccc}
+    \toprule
+    Case & Test/Method         & Newton & Chord & Secant \\
+    \midrule
+    a & $f(x) = 2x^2 -5$    & 6 & 8  & 64  \\\midrule
+    b & $f(x) = \sin x + x$ & 3 & 3  & --   \\\midrule
+    c & $f(x) = \cos x$     & 4 & --  & -- \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:number_iterations}
+\end{table}
+The stopping criterion used in $\tau_r=\tau_a=10^{-6}$.
 
-  \begin{figure}[H]
-    \centering
-    \begin{minipage}{0.45\linewidth}
-      \includegraphics[width=\textwidth]{f1.pdf}
-    \end{minipage}
-    \begin{minipage}{0.45\linewidth}
-      \includegraphics[width=\textwidth]{f2.pdf}
-    \end{minipage}
-    \begin{minipage}{0.45\linewidth}
-      \includegraphics[width=\textwidth]{f3.pdf}
-    \end{minipage}
-    \caption{Convergence history with different methods: case (a) (left), case (b) middle, case (c) right .}
-    \label{convergence}
-  \end{figure}
+\begin{figure}[H]
+  \centering
+  \begin{minipage}{0.45\linewidth}
+    \includegraphics[width=\textwidth]{f1.pdf}
+  \end{minipage}
+  \begin{minipage}{0.45\linewidth}
+    \includegraphics[width=\textwidth]{f2.pdf}
+  \end{minipage}
+  \begin{minipage}{0.45\linewidth}
+    \includegraphics[width=\textwidth]{f3.pdf}
+  \end{minipage}
+  \caption{Convergence history with different methods: case (a) (left), case (b) middle, case (c) right .}
+  \label{convergence}
+\end{figure}
 
-  Figure~\ref{convergence} shows the convergence of the three methods
-  for these problems.
+Figure~\ref{convergence} shows the convergence of the three methods
+for these problems.
 
- Secant and chord method do not yield the solution for case
-      (c). The tolerance is satisfied for secant method (shown in
-      green), but the solution is not the correct solution. This tells
-      that the stopping criteria is not robust. For the chord method
-      (shown in blue), the the iterates keep cycling and they do not
-      converge at all.
+Secant and chord method do not yield the solution for case
+(c). The tolerance is satisfied for secant method (shown in
+green), but the solution is not the correct solution. This tells
+that the stopping criteria is not robust. For the chord method
+(shown in blue), the the iterates keep cycling and they do not
+converge at all.
 
 About the convergence rates:
-  \begin{itemize}
-    \item The Newton's method is quadratic
-    \item The secant method is superlinear
-    \item The chord method is linear
-  \end{itemize}
-  
+\begin{itemize}
+\item The Newton's method is quadratic
+\item The secant method is superlinear
+\item The chord method is linear
+\end{itemize}
+
 \end{homeworkProblem}
