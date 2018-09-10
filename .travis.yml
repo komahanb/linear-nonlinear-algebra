@@ -35,6 +35,7 @@ script:
   - cd test/conjugate-gradient && make && ./run && cd - ;
   - cd test/gmres-cgnr-cgne && make && ./run && cd - ;
   - cd test/nonlinear && make && ./run && cd - ;
+  - cd test/lu-lupp && make && ./run && cd - ;
 
 after_success:
 - coveralls
