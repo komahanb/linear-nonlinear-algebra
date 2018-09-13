@@ -13,6 +13,7 @@
 \usepackage{multirow}
 \usepackage{booktabs}
 \usetikzlibrary{automata,positioning}
+\usepackage{subfigure}
 
 %
 % Basic Document Settings
@@ -155,14 +156,66 @@
   
   \medskip
 
-  Yes, its is the question of condition number of the jacobian that
-  goes into the Newton iteration.
+  
+  The transformation of varaibles will change the condition number of
+  the Jacobian. The problem can be easier (or difficult) to solve than
+  the original problem. The convergence of iterative methods for the
+  solution of linear system depnds on the condition number of the
+  Jacobian matrix.
+
+
+  We should get the same solution $x$ with Newton's method. The
+  Newton's method is given by:
+  $$
+  x_{n+1} = x_{n} - F'(x_n)^{-1}F(x_n)
+  $$
+  Introduce a change of variables such that $x = A^{-1} y$.  Let $G(y)$ be
+  the new function and $G'(x)$ be the new Jacobian. The Newton iteration
+  is:
+  $$
+  y_{n+1} = y_{n} - G'(y_n)^{-1}G(y_n)
+  $$
+  Multiply by $A^{-1}$ on both sides
+  $$
+  A^{-1}y_{n+1} = A^{-1}y_{n} - A^{-1}G'(y_n)^{-1}G(y_n)
+  $$
+  Using $A^{-1}y =x$, this becomes:
+  $$
+  x_{n+1} = x_{n} - A^{-1} G'(y_n)^{-1}G(y_n)
+  $$
+  Now expaning the second term in term of the original function and
+  variables:
+  $$
+  x_{n+1} = x_{n} - A^{-1} AF'(A^{-1}y_n)^{-1}A^{T}A^{-T}G(A^{-1}y_n)
+  $$
+  Using $A^{-1}y =x$, this becomes:
+  $$
+  x_{n+1} = x_{n} - F'(x_n)^{-1}F(x_n)
+  $$ which is Newton's method in terms of the original variable $x$.
+
+
+  Assume that standard assumptions hold, then Newton iterates
+  converge quadratiacally such that
+  $$ || x_{n+1} - x^* || \le \beta || x_{n} - x^*||^2
+  $$
+  where $\beta>0$ is a constant.
+
+  If we use transmation of varaibles for $x$:
+  $$ || A^{-1}y_{n+1} - A^{-1}y^* || \le \beta || A^{-1}y_{n} - A^{-1}y^*||^2
+  $$ The definition of the norm of now different than before and we
+  expect the performance to change. For chord method, we have linear
+  order of convergence.  $$ || A^{-1}y_{n+1} - A^{-1}y^* || \le \beta
+  || A^{-1}y_{n} - A^{-1}y^*|| $$
+
+  The chord method will be affected \emph{comparatively} less by
+  change of variables.
   
 \end{homeworkProblem}
 
 \pagebreak
 
 \begin{homeworkProblem}
+  
   \emph{Assume that the standard assumptions hold, that the cost of a
     function evaluation is ${\cal{O}}(N^2)$ floating-point operations,
     the cost of a Jacobian is ${\cal{O}}(N)$ function evaluations, and
@@ -170,19 +223,61 @@
     converges quadratically to $x^*$.}
   
   \medskip
-
+  
   \paragraph{a.}
   \emph{Estimate what is the number of iteration needed to obtain $\|e_n\| \le \epsilon \|e_0\|$, where $\epsilon$ is a small tolerance value.}
   
-  At each Newton's iteration $n$ there is:
+  $$
+  ||e_{n}|| \le \beta ||e_{n-1}||^\alpha
+  $$ where $\beta>0$ is a constant and $\alpha =2$ is the order of
+  convergence of Newton's method. Newton's method will converge
+  \emph{quadratically}.
+  Using the above relation,
+  $$   ||e_{1}|| \le \beta ||e_{0}||^2$$
+  $$   ||e_{2}|| \le \beta ||e_{1}||^2 =  \beta \left( \beta ||e_{0}||^2 \right)^2 = \beta^3 ||e_0||^{2^2} $$
+  $$   ||e_{3}|| \le \beta ||e_{2}||^2 = \beta \left( \beta^3 ||e_0||^{2^2} \right)^2 = \beta^{2*3+1} ||e_0||^{2^3} $$
+  Therefore,
+  $$ ||e_{n}|| \le \beta ||e_{n-1}||^2  = \beta^{2*n+1} ||e_0||^{2^n} $$
+
+  This can be rearranged to get:
+  $$
+  \frac{||e_{n}||}{||e_{0}||} \le \beta^{2*n+1} ||e_0||^{2^n - 1} \le \epsilon
+  $$
+  We ignore the contribution of $\beta^{2*n+1}$ as it is not comparatively dominant (for simplicity).
+
+  We use:
+  $$
+  ||e_0||^{2^n - 1} \le \epsilon
+  $$
+  Taking logarithm on both sides
+
+  $$
+  (2^n -1) \ln(||e_0||) \le \ln (\epsilon)
+  $$
+  $$
+  2^n \le \frac{ \ln (\epsilon)}{ \ln (||e_0||)} + 1
+  $$
+  Taking logarithm again and rearranging we get:
+
+  $$
+  n \le  \frac{ \ln \left( \frac{ \ln (\epsilon)}{ \ln (||e_0||)} + 1 \right)}{\ln (2)}
+  $$
+  
+  \paragraph{b.}
+  \emph{What is the number of floating point operations required to
+    get this accuracy?}  At each Newton's iteration $n$ there is:
+
   \begin{enumerate}
-  \item one function evaluation
-  \item one Jacobian evaluation
+  \item one function evaluation: ${\cal{O}}(N^2)$
+  \item one Jacobian evaluation takes N function evaluations: ${\cal{O}}(N^3)$
+  \item one factorization of Jacobian is ${\cal{O}}(N^3)$  (assuming LU decomposition)
+    used)
+  \item forward and back-substitutions each take ${\cal{O}}(N^2)$
   \end{enumerate}
 
-  \paragraph{b.}
-  \emph{What is the number of floating point operations required to get this accuracy?}
-  
+  Floating point operations per iteration: ${\cal{O}}(N^2+N^3+N^2+N^2)={\cal{O}}(3N^2+N^3)$
+  Total floating point operations for Newton method : $n*{\cal{O}}(3N^2+N^3)$
+
 \end{homeworkProblem}
 
 \pagebreak
@@ -192,6 +287,45 @@
   \emph{Answer the questions in the previous problem for the chord method.}
 
   \medskip
+
+  \paragraph{a.}
+  \emph{Estimate what is the number of iteration needed to obtain
+    $\|e_n\| \le \epsilon \|e_0\|$, where $\epsilon$ is a small
+    tolerance value.}
+
+
+  The chord method exhibits linear convergence $\alpha=1$. Therefore,
+  the error relation to the initial error is as follows:
+  $$ ||e_{n}|| \le \beta ||e_{n-1}||  = \beta^{n} ||e_0|| $$
+  Rearranging this:
+  $$
+  \frac{||e_{n}||}{||e_{0}||} \le \beta^{n} \le \epsilon
+  $$
+  Taking logarithm on both sides
+  $$
+  n  \ln(\beta) \le \ln (\epsilon)
+  $$
+  This results in the following estimate for the number of
+  iterations:
+  $$
+  n \le \frac{\ln (\epsilon)}{\ln (\beta)}
+  $$
+  
+  \paragraph{b.}
+  \emph{What is the number of floating point operations required to
+    get this accuracy?}  At each Newton's iteration $n$ there is:
+
+  \begin{enumerate}
+  \item one function evaluation: ${\cal{O}}(N^2)$
+  \item one Jacobian evaluation takes N function evaluations: ${\cal{O}}(N^3)$
+  \item one factorization of Jacobian is ${\cal{O}}(N^3)$  (assuming LU decomposition)
+    used)
+  \item forward and back-substitutions each take ${\cal{O}}(N^2)$
+  \end{enumerate}
+
+  Floating point operations per iteration: ${\cal{O}}(N^2+N^3+N^2+N^2)={\cal{O}}(3N^2+N^3)$
+  Total floating point operations for Chord method : $n*{\cal{O}}(3N^2+N^3)$
+
   
 \end{homeworkProblem}
 
@@ -212,24 +346,51 @@
   \medskip
 
   \begin{table}[H]
-    \caption{Number of iterations taken to for the test case.}  \centering
-    \begin{tabular}{c|ccc}
+    \caption{Number of iterations taken to for the test case.} \medskip \centering
+    \begin{tabular}{c|c|ccc}
       \toprule
-      Test/Method         & Newton & Chord & Secant \\
+     Case & Test/Method         & Newton & Chord & Secant \\
       \midrule
-      $f(x) = 2x^2 -5$    & 6 & & \\
-      $f(x) = \sin x + x$ & 3 & & \\
-      $f(x) = \cos x$     & 4 & & \\
+     a & $f(x) = 2x^2 -5$    & 6 & 8  & 64  \\\midrule
+     b & $f(x) = \sin x + x$ & 3 & 3  & --   \\\midrule
+     c & $f(x) = \cos x$     & 4 & --  & -- \\
       \bottomrule
     \end{tabular}
     \label{tab:number_iterations}
   \end{table}
+  The stopping criterion used in $\tau_r=\tau_a=10^{-6}$.
 
-  The stopping criterion used in $10^-{-6}$.
-  
-  The chord method is only linear, and only locally convergent
-  The second method is superlinear
-  The Newton's method is quadratic
+  \begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\linewidth}
+      \includegraphics[width=\textwidth]{f1.pdf}
+    \end{minipage}
+    \begin{minipage}{0.45\linewidth}
+      \includegraphics[width=\textwidth]{f2.pdf}
+    \end{minipage}
+    \begin{minipage}{0.45\linewidth}
+      \includegraphics[width=\textwidth]{f3.pdf}
+    \end{minipage}
+    \caption{Convergence history with different methods: case (a) (left), case (b) middle, case (c) right .}
+    \label{convergence}
+  \end{figure}
+
+  Figure~\ref{convergence} shows the convergence of the three methods
+  for these problems.
+
+ Secant and chord method do not yield the solution for case
+      (c). The tolerance is satisfied for secant method (shown in
+      green), but the solution is not the correct solution. This tells
+      that the stopping criteria is not robust. For the chord method
+      (shown in blue), the the iterates keep cycling and they do not
+      converge at all.
+
+About the convergence rates:
+  \begin{itemize}
+    \item The Newton's method is quadratic
+    \item The secant method is superlinear
+    \item The chord method is linear
+  \end{itemize}
   
 \end{homeworkProblem}
 
