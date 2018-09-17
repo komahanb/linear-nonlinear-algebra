@@ -4,70 +4,272 @@ program test
   use lapack, only : dgetrf
   use linear_algebra 
   use direct_linear_solve, only : dlufactor, dluppfactor
-
+  
   implicit none
 
-  integer, parameter :: npts = 4000
-  real(8) :: x(npts), xtmp(npts), b(npts), y(npts)
-  integer :: iter, flag, i, j
-  real(8) :: tol, omega(20)
-  real(8) :: scale = 1.0d0
-  real(8) :: lambda = 1.0d0
+  integer, parameter :: sizes(6) = [200, 400, 800, 1000, 2000, 4000]
 
-  real(8), allocatable :: A(:,:)
-  real(8), allocatable :: L(:,:)
-  real(8), allocatable :: U(:,:)
-  real(8), allocatable :: P(:,:)
+  integer :: i, npts
 
-  allocate(A(npts, npts))
-  allocate(L, U, P, source = A)
-  
-  real :: start, finish
-  call cpu_time(start)
+  ! Run for all problem sizes
+  do i = 1, size(sizes)
 
-  call assemble_system(0.0d0, 1.0d0, npts, A, b, x, lambda)
-!!$  xtmp = solve(A,b)
-  print *, "assembled system"
-  
-  ! Initialize matrices
-  L = 0.0d0
-  U = 0.0d0
-  P = 0.0d0
+     npts = sizes(i)
 
-  ! Ax = b  is now LUx=b
-  ! call dlufactor(A, L, U, flag)
-  
-  call dluppfactor(A, L, U, P, flag)
-  b = matmul(P,b)
-  print *, "factorized matrix"
-  
-  ! Solve Ly = b
-  call fwdsub(L, b, y, flag)
+     call gesolve(npts)
+     call geppsolve(npts)
+     !call exact(npts)
 
-  ! Solve Ux = y
-  call backsub(U, y, x, flag)
-
-  call cpu_time(finish)
-  print '("Time = ",f6.3," seconds.")',finish-start
-
-  ! Write the time for each linear solve
-  open(11, file='time.dat')
-  write(11, *) "size", "time"
-  write(11, *) npts, finish-start
-  close(11)
-
-  ! Write solution
-  open(11, file='lu.dat')
-  write(11, *) "x ", "lu ", "exact"
-  do i = 1, npts
-     write(11, *) dble(i)/dble(npts), x(i), xtmp(i)
   end do
-  close(11)
+
+!  call time_report(.false.)
+!  call time_report(.true.)
 
 contains
 
+  subroutine geppsolve(npts)
 
-  
+    ! Problem setup
+    integer, intent(in) :: npts
+
+    ! Matrices and vectors
+    real(8), allocatable, dimension(:,:) :: A, L, U, P
+    real(8), allocatable, dimension(:)   :: x, xtmp, b, y
+
+    ! Physics parameters
+    real(8), parameter :: lambdas(2) = [0.0d0, 10.0d0]
+    real(8) :: lambda
+    integer :: flag, i, k
+     
+    ! Filename
+    character(len=50) :: filename
+    character(len=50) :: strlambda, strnpts
+
+    ! Run for each lambda
+    do k = 1, size(lambdas)
+
+       lambda = lambdas(k)
+
+       ! Create filename and open
+       write(strlambda,*) int(lambda)
+       write(strnpts,*) int(npts)
+       filename = 'gepp-solution-lam-'// trim(adjustl(strlambda)) &
+            & //"-npts-" // trim(adjustl(strnpts)) //'.dat'
+       open(11,file=filename)
+       write(11,*) "x ", "u"
+
+       ! Allocate matrices
+       allocate(A(npts, npts))
+       allocate(L, U, P, source = A)
+       A = 0.0d0
+       L = 0.0d0
+       U = 0.0d0
+       P = 0.0d0
+
+       ! Allocate vectors
+       allocate(x(npts))
+       allocate(xtmp, b, y, source = x)
+       x    = 0.0d0
+       xtmp = 0.0d0 
+       b    = 0.0d0
+
+       ! Solve x
+       call assemble_system(0.0d0, 1.0d0, npts, A, b, x, lambda)
+       call dluppfactor(A, L, U, P, flag)
+       b = matmul(P,b)
+       call fwdsub(L, b, y, flag)
+       call backsub(U, y, x, flag)
+
+       ! Write output
+       do i = 1, npts
+          write(11, *) dble(i)/dble(npts), x(i)
+       end do
+
+       close(11)
+
+       deallocate(A,L,U,P,x,xtmp,b,y)
+
+    end do
+
+  end subroutine geppsolve
+
+  subroutine gesolve(npts)
+
+    ! Problem setup
+    integer, intent(in) :: npts
+
+    ! Matrices and vectors
+    real(8), allocatable, dimension(:,:) :: A, L, U, P
+    real(8), allocatable, dimension(:)   :: x, xtmp, b, y
+
+    ! Physics parameters
+    real(8), parameter :: lambdas(2) = [0.0d0, 10.0d0]
+    real(8) :: lambda
+    integer :: flag, i, k
+     
+    ! Filename
+    character(len=50) :: filename
+    character(len=50) :: strlambda, strnpts
+
+    ! Run for each lambda
+    do k = 1, size(lambdas)
+
+       lambda = lambdas(k)
+
+       ! Create filename and open
+       write(strlambda,*) int(lambda)
+       write(strnpts,*) int(npts)
+       filename = 'ge-solution-lam-'// trim(adjustl(strlambda)) &
+            & //"-npts-" // trim(adjustl(strnpts)) //'.dat'
+       open(11,file=filename)
+       write(11,*) "x ", "u"
+
+       ! Allocate matrices
+       allocate(A(npts, npts))
+       allocate(L, U, P, source = A)
+       A = 0.0d0
+       L = 0.0d0
+       U = 0.0d0
+       P = 0.0d0
+
+       ! Allocate vectors
+       allocate(x(npts))
+       allocate(xtmp, b, y, source = x)
+       x    = 0.0d0
+       xtmp = 0.0d0 
+       b    = 0.0d0
+
+       ! Solve x
+       call assemble_system(0.0d0, 1.0d0, npts, A, b, x, lambda)
+       call dlufactor(A, L, U, flag)
+       call fwdsub(L, b, y, flag)
+       call backsub(U, y, x, flag)
+
+       ! Write output
+       do i = 1, npts
+          write(11, *) dble(i)/dble(npts), x(i)
+       end do
+
+       close(11)
+
+       deallocate(A,L,U,P,x,xtmp,b,y)
+
+    end do
+
+  end subroutine gesolve
+
+  subroutine time_report(pivot)
+
+    ! Problem setup
+    integer :: npts
+    logical :: pivot
+
+    ! Matrices and vectors
+    real(8), allocatable, dimension(:,:) :: A, L, U, P
+    real(8), allocatable, dimension(:)   :: x, xtmp, b, y
+
+    ! Timing variables
+    real(8) :: total_start, total_finish, total_time
+    real(8) :: assembly_start, assembly_finish, assembly_time
+    real(8) :: factor_start, factor_finish, factor_time
+    real(8) :: elim_start, elim_finish, elim_time
+
+    integer, parameter :: sizes(6) = [200, 400, 800, 1000, 2000, 4000]
+    real(8), parameter :: lambdas(2) = [0.0d0, 10.0d0]
+    real(8) :: lambda
+    integer :: flag, i, k
+
+    ! Run for each lambda
+    do k = 1, size(lambdas)
+
+       lambda = lambdas(k)
+
+       ! Write the time for each linear solve   
+       if (pivot .eqv. .false.) then
+          if (k .eq. 1) then 
+             open(11, file='time_study_ge_lam0.dat')
+          else
+             open(11, file='time_study_ge_lam10.dat')
+          end if
+       else 
+          if (k .eq. 1) then 
+             open(11, file='time_study_gepp_lam0.dat')
+          else
+             open(11, file='time_study_gepp_lam10.dat')
+          end if
+       end if
+       write(11, *) "size ", "factor_time ", "elim_time ", "total_time"
+
+       ! Run for all problem sizes
+       do i = 1, size(sizes)
+
+          npts = sizes(i)
+
+          ! Allocate matrices
+          allocate(A(npts, npts))
+          allocate(L, U, P, source = A)
+          A = 0.0d0
+          L = 0.0d0
+          U = 0.0d0
+          P = 0.0d0
+
+          ! Allocate vectors
+          allocate(x(npts))
+          allocate(xtmp, b, y, source = x)
+          x    = 0.0d0
+          xtmp = 0.0d0 
+          b    = 0.0d0
+
+          call cpu_time(total_start)
+
+          ! Assemble linear system
+          call cpu_time(assembly_start)
+          call assemble_system(0.0d0, 1.0d0, npts, A, b, x, lambda)
+          call cpu_time(assembly_finish)
+          assembly_time = assembly_finish-assembly_start
+          print *, "assembled system in ", assembly_time
+
+          call cpu_time(factor_start)
+          if (pivot .eqv. .false.) then
+             ! Ax = b  is now LUx = b
+             call dlufactor(A, L, U, flag)
+          else
+             call dluppfactor(A, L, U, P, flag)
+             b = matmul(P,b)
+          end if
+          call cpu_time(factor_finish)
+          factor_time = factor_finish-factor_start
+          print *, "factorized matrix in ", factor_time
+
+          call cpu_time(elim_start)
+
+          ! Solve Ly = b
+          call fwdsub(L, b, y, flag)
+
+          ! Solve Ux = y
+          call backsub(U, y, x, flag)
+
+          call cpu_time(elim_finish)
+          elim_time = elim_finish-elim_start
+          print *, "elimination completed in ", elim_time
+
+          call cpu_time(total_finish)
+          total_time = total_finish - total_start 
+          print '("Time = ",f6.3," seconds.")', total_time
+
+          ! Write output data
+          write(11, *) npts, factor_time, elim_time, total_time
+
+          deallocate(A,L,U,P,x,xtmp,b,y)
+
+       end do
+
+       close(11)
+
+    end do
+
+  end subroutine time_report
+
   ! Model problem to solve
   subroutine assemble_system(a, b, npts, V, rhs, u, lambda)
 
