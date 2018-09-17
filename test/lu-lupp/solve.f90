@@ -7,15 +7,12 @@ program test
 
   implicit none
 
-  integer, parameter :: npts = 3
-  real(8), parameter :: max_tol = 1.0d-6
-  integer, parameter :: max_it  = 100000
-
+  integer, parameter :: npts = 4000
   real(8) :: x(npts), xtmp(npts), b(npts), y(npts)
   integer :: iter, flag, i, j
   real(8) :: tol, omega(20)
   real(8) :: scale = 1.0d0
-  real(8) :: lambda = 10.0d0
+  real(8) :: lambda = 1.0d0
 
   real(8), allocatable :: A(:,:)
   real(8), allocatable :: L(:,:)
@@ -25,72 +22,41 @@ program test
   allocate(A(npts, npts))
   allocate(L, U, P, source = A)
   
-!!$  A(1,:) = [0.0d0, 1.0d0]
-!!$  A(2,:) = [1.0d0, 0.0d0]
-!!$  b(1) = 2.0d0
-!!$  b(2) = 3.0d0
-!!$  
-!!$  A(1,:) = [3.0, 2.0, 1.0]
-!!$  A(2,:) = [-1.0, 0.0, -3.0]
-!!$  A(3,:) = [-2.0, 1.0, 2.0]
+  real :: start, finish
+  call cpu_time(start)
 
-
-  A(1,:) = [-2.0, 1.0, 2.0]
-  A(2,:) = [ 3.0, 2.0, 1.0]
-  A(3,:) = [-1.0, 0.0, -3.0]
-
-
-  b(1) = 1.0
-  b(2) = 2.0
-  b(3) = 3.0
-
-!!$  call assemble_system(0.0d0, 1.0d0, npts, A, b, x, lambda)
-!!$  A(1,:) = [1.0d0, 1.0d0, 1.0d0]
-!!$  A(2,:) = [2.0d0, 3.0d0, 5.0d0]
-!!$  A(3,:) = [4.0d0, 6.0d0, 8.0d0]
-  xtmp = solve(A,b)
-
-!!$  A(1,:) = [1.0d0, 2.0d0, -1.0d0]
-!!$  A(2,:) = [4.0d0, 3.0d0, 1.0d0]
-!!$  A(3,:) = [2.0d0, 2.0d0, 3.0d0]
-
+  call assemble_system(0.0d0, 1.0d0, npts, A, b, x, lambda)
+!!$  xtmp = solve(A,b)
+  print *, "assembled system"
+  
+  ! Initialize matrices
   L = 0.0d0
   U = 0.0d0
   P = 0.0d0
 
   ! Ax = b  is now LUx=b
-  !call dlufactor(A, L, U, flag)
+  ! call dlufactor(A, L, U, flag)
+  
   call dluppfactor(A, L, U, P, flag)
-  print *, "P="
-  do i = 1, npts
-     write(*,"(100g15.5)") (P(i,j), j = 1, npts)
-  enddo
-!!$  print *, b
-!!$  A = matmul(P,A)
-!!$  b = matmul(P,b)
-!!$  print *, b
-!!$  call dlufactor(A, L, U, flag)
-
-  print *, "A="
-  do i = 1, npts
-     write(*,"(100g15.5)") (A(i,j), j = 1, npts)
-  enddo  
-  print *, "L="
-  do i = 1, npts
-     write(*,"(100g15.5)") (L(i,j), j = 1, npts)
-  enddo  
-  print *, "U="
-  do i = 1, npts
-     write(*,"(100g15.5)") (U(i,j), j = 1, npts)
-  enddo  
-
+  b = matmul(P,b)
+  print *, "factorized matrix"
+  
   ! Solve Ly = b
   call fwdsub(L, b, y, flag)
 
   ! Solve Ux = y
   call backsub(U, y, x, flag)
 
-  ! Write data
+  call cpu_time(finish)
+  print '("Time = ",f6.3," seconds.")',finish-start
+
+  ! Write the time for each linear solve
+  open(11, file='time.dat')
+  write(11, *) "size", "time"
+  write(11, *) npts, finish-start
+  close(11)
+
+  ! Write solution
   open(11, file='lu.dat')
   write(11, *) "x ", "lu ", "exact"
   do i = 1, npts
@@ -100,6 +66,8 @@ program test
 
 contains
 
+
+  
   ! Model problem to solve
   subroutine assemble_system(a, b, npts, V, rhs, u, lambda)
 

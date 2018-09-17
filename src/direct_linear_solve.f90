@@ -32,7 +32,7 @@ contains
 
     ! Local variables
     integer :: k, j, m
-
+    
     ! Initialize
     m = size(A,1)
     U = A 
@@ -41,7 +41,7 @@ contains
     end do
 
     ! Algorithm
-    do k = 1, m-1
+    do k = 1, m - 1
        do j = k + 1, m
           L(j,k) = U(j,k)/U(k,k)
           U(j,k:m) = U(j,k:m) - L(j,k)*U(k,k:m)
@@ -51,10 +51,21 @@ contains
   end subroutine dlufactor
 
   !===================================================================!
+  ! Swap two arrays
+  !===================================================================!
+  pure subroutine swap(a, b)
+    real(dp), intent(inout), dimension(:) :: a, b
+    real(dp), dimension(size(a)) :: work
+    work = a
+    a = b
+    b = work
+  end subroutine swap
+
+  !===================================================================!
   ! Plain vanilla LU factorization algorithm with partial pivoting
   !===================================================================!
   
-  subroutine dluppfactor(A, L, U, P, info)
+  pure subroutine dluppfactor(A, L, U, P, info)
 
     ! Arguments
     real(dp), intent(inout)  :: A(:,:)
@@ -75,15 +86,17 @@ contains
     end do
     
     ! Algorithm
-    do k = 1, m - 1      
+    do k = 1, m-1
 
-       ! Pivoting logic
-       pivot = maxloc(abs(U(:,k)), dim = 1)
-
+       ! Find the entry in the left column with the largest absolute
+       ! value. This entry is called the pivot.
+       pivot = maxloc(abs(U(k:m,k)), dim = 1)
+       i = pivot + k - 1
+       
        ! Exchange rows
-       U(k,k:m)   = U(pivot,k:m)
-       L(k,1:k-1) = L(pivot,1:k-1)
-       P(k,:)     = P(pivot,:)
+       call swap(U(k,k:m)   , U(i,k:m))
+       call swap(L(k,1:k-1) , L(i,1:k-1))
+       call swap(P(k,:)     , P(i,:))
 
        ! LU logic
        do j = k + 1, m
