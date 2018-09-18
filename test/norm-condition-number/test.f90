@@ -15,10 +15,14 @@ program test
   integer              :: matsize
   integer              :: trial
 
+  integer, parameter :: npoints = 100000
+  real(8) :: array(npoints)
+  integer :: i
+
   ! Open file handle for output
   open(11, file='problem4.dat')  
   write(11,'(4A20)') 'm', 'L1Norm/L2Norm', 'L2Norm/LinfNorm', 'kappa'
-
+  
   ! For increasing matrix size
   do matsize = 100, 1000, 100
 
@@ -31,7 +35,7 @@ program test
         call get_random_lower(L)     ! fix martrix entries
 
         ! Get the 2 norm condition number
-        ! condn(trial) = cond(L, 2)
+        condn(trial) = cond(L, 2)
         condn(trial) = dble(trial) ! fix condition number evaluation
 
         l1norm(trial)   = norm(L(:,1), 1) ! fix matrix norms
@@ -59,27 +63,39 @@ program test
   stop
 
 contains
+  
+  function random_normal(mean,stdev) result(c)
+
+    real(8), intent(in) :: mean,stdev
+    real(8)             :: c, r, theta
+    real(8)             :: temp(2)
+    real(8), parameter  :: pi = 4.d0*datan(1.d0)
+
+    call random_number(temp)
+
+    r = (-2.0d0*log(temp(1)))**0.5    
+    theta = 2.0d0*pi*temp(2)
+
+    c = mean+stdev*r*sin(theta)
+
+  end function random_normal
 
   subroutine get_random_lower(L)
 
     real(8), intent(inout) :: L(:,:)
     integer :: i, j, m, n
 
-    ! Fill in with values
-    call random_number(L)
-
     m = size(L,1)
     n = size(L,2)
-
-    ! Zero the upper/lower triangular part
+  
     do i = 1, m 
-       do j = i+1, n
-          L(i,j) = 0.0d0
+       do j = 1, i
+          L(i,j) = random_normal(0.0d0, sqrt(dble(m)))
        end do
     end do
 
   end subroutine get_random_lower
-
+  
   pure real(8) function norm(x, p)
 
     real(8), intent(in) :: x(:)
