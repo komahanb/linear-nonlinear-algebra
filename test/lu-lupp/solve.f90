@@ -11,16 +11,16 @@ program test
 
   integer :: i, npts
 
-  ! Run for all problem sizes
-  do i = 1, size(sizes)
-
-     npts = sizes(i)
-
-     call gesolve(npts)
-     call geppsolve(npts)
-     !call exact(npts)
-
-  end do
+!!$  ! Run for all problem sizes
+!!$  do i = 1, size(sizes)
+!!$
+!!$     npts = sizes(i)
+!!$
+!!$     call gesolve(npts)
+!!$     call geppsolve(npts)
+!!$     !call exact(npts)
+!!$
+!!$  end do
 
 !  call time_report(.false.)
 !  call time_report(.true.)
@@ -92,6 +92,18 @@ contains
     end do
 
   end subroutine geppsolve
+
+  pure real(8) function uhat(x, lambda)
+
+    real(8), intent(in) :: x
+    real(8), intent(in) :: lambda
+
+    real(8) :: alpha
+
+    alpha = sqrt(lambda)
+    uhat =  2.d0*exp(-alpha*x)*(exp(2.d0*alpha)-exp(2.d0*alpha*x))/(exp(2.d0*alpha)-1.d0)
+
+  end function uhat
 
   subroutine gesolve(npts)
 
@@ -271,7 +283,7 @@ contains
   end subroutine time_report
 
   ! Model problem to solve
-  subroutine assemble_system(a, b, npts, V, rhs, u, lambda)
+  subroutine assemble_system(a, b, npts, V, rhs, u, lambda, homogenous)
 
     use linear_algebra, only : inv
 
@@ -284,6 +296,7 @@ contains
     real(8), intent(in)  :: lambda
     real(8), parameter   :: PI = 3.141592653589793d0
     integer              :: m, n, i, j
+    logical, intent(in), optional :: homogenous
 
     h = (b-a)/dble(npts+1)
     V = 0.0d0
@@ -304,14 +317,22 @@ contains
        end do
     end do
 
-    ! Assemble the RHS
-    rhs = 0.0d0
-    rhs(1)    = 1.0d0 + h*h*(3.0d0*(dble(i)*h)**2.0d0 - 0.5d0)
-    rhs(npts) = 0.0d0 + h*h*(3.0d0*(dble(npts)*h)**2.0d0 - 0.5d0)
+    if(present(homogenous)) then
+       ! Assemble the RHS
+       rhs = 0.0d0
+       rhs(1)    = 2.0d0
+       rhs(npts) = 0.0d0
+    else
+       ! Assemble the RHS
+       rhs = 0.0d0
+       rhs(1)    = 2.0d0 + h*h*(3.0d0*(dble(i)*h)**2.0d0 - 0.5d0)
+       rhs(npts) = 0.0d0 + h*h*(3.0d0*(dble(npts)*h)**2.0d0 - 0.5d0)
+    end if
+
 
     ! Initial solution profile (straight line)
     do i = 1, npts
-       u(i) = 1.0d0 + ((0.0d0+1.0d0)/(b-a))*(dble(i)*h)
+       u(i) = 2.0d0 + ((0.0d0+2.0d0)/(b-a))*(dble(i)*h)
     end do
 
   end subroutine assemble_system

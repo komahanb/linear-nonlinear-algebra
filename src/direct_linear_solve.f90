@@ -62,7 +62,7 @@ contains
   end subroutine swap
 
   !===================================================================!
-  ! Plain vanilla LU factorization algorithm with partial pivoting
+  ! LU factorization algorithm with partial pivoting
   !===================================================================!
   
   pure subroutine dluppfactor(A, L, U, P, info)
