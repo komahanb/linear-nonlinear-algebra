@@ -33,14 +33,13 @@ program test
      do trial = 1, ntrials
 
         call get_random_lower(L)     ! fix martrix entries
-
+                            
         ! Get the 2 norm condition number
-        condn(trial) = cond(L, 2)
-        condn(trial) = dble(trial) ! fix condition number evaluation
+        condn(trial) = cond(L,2) ! fix condition number evaluation
 
-        l1norm(trial)   = norm(L(:,1), 1) ! fix matrix norms
-        l2norm(trial)   = norm(L(:,1), 2)
-        linfnorm(trial) = norm(L(:,1), 0)
+        l1norm(trial)   = matnorm(L, 1) ! fix matrix norms
+        l2norm(trial)   = matnorm(L, 2)
+        linfnorm(trial) = matnorm(L, 0)
 
      end do
 
@@ -94,24 +93,72 @@ contains
        end do
     end do
 
-  end subroutine get_random_lower
-  
-  pure real(8) function norm(x, p)
+  end subroutine get_random_lower  
 
+  !===================================================================!
+  ! Implement vector p-norm
+  !===================================================================!
+  
+  pure real(8) function vecnorm(x, p)
+    
     real(8), intent(in) :: x(:)
     integer, intent(in) :: p
     integer             :: length, k
 
+    ! initialize value
+    vecnorm = 0.0d0
+    
     length = size(x)
     if ( p .eq. 0 ) then
-       norm = maxval(abs(x))
+       vecnorm = maxval(abs(x))
     else
        do k = 1, length
-          norm = norm + abs(x(k))**p
+          vecnorm = vecnorm + abs(x(k))**dble(p)
        end do
-       norm = norm**(1.0d0/dble(p))
+       vecnorm = vecnorm**(1.0d0/dble(p))
     end if
 
-  end function norm
+  end function vecnorm
+
+  !===================================================================!
+  ! Implement Matrix p-norm
+  !===================================================================!
+  
+  pure real(8) function matnorm(A, p)
+
+    real(8), intent(in) :: A(:,:)
+    integer, intent(in) :: p
+    integer             :: length, k
+    real(8) :: w(size(A,1))
+
+    ! Create a unit vector
+    w = 1.0d0
+    w = w/vecnorm(w,p)
+
+    ! Get the matrix vector product
+    w = matmul(A,w)
+
+    matnorm = vecnorm(w,p)
+    
+  end function matnorm
+
+  !===================================================================!
+  ! Implement Matrix p-cond
+  !===================================================================!
+  
+  real(8) function cond(A, p)
+
+    real(8), intent(in) :: A(:,:)
+    integer, intent(in) :: p
+    integer             :: length, k
+    real(8) :: w(size(A,1))
+
+    ! Get singular values
+    w = svdvals(A)
+
+    ! find the condition number
+    cond = maxval(w)/minval(w)
+    
+  end function cond
 
 end program test
