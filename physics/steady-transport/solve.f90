@@ -4,13 +4,46 @@ program test
   use linear_algebra, only: solve
   use linear_transport, only: exact1, assemble_system
   use nonlinear_transport, only: exact2, exact3, exact4!, assemble_system2,  assemble_system3,  assemble_system4 
+  use direct_linear_solve, only: thomas
 
   implicit none
 
-  call solve_linear_transport()
+  !call solve_linear_transport()
   !call solve_nonlinear_transport()
 
+  call test_thomas(8)
+
 contains
+  
+  subroutine test_thomas(n)
+
+    implicit none
+
+    ! Arguments
+    integer, intent(in) :: n 
+
+    ! Local variables
+    integer, parameter :: bandwidth = 3
+    real(8) :: A(n,bandwidth), b(n)
+    integer :: i
+
+    ! Setup the matrix
+    A(1,:) = [0.0d0, 4.0d0, -1.0d0]
+    do concurrent(i = 2:n-1)
+       A(i,:) = [-1.0d0, 4.0d0, -1.0d0]
+    end do
+    A(n,:) = [-1.0d0, 4.0d0, 0.0d0]
+
+    ! Setup right hand side
+    b = 0.0d0
+    b(1) = 10.0d0
+
+    ! Solve the linear system Ax = b
+    call thomas(bandwidth, A, b)
+
+    print *, b
+
+  end subroutine test_thomas
 
 subroutine solve_linear_transport()
   

@@ -13,10 +13,47 @@ module direct_linear_solve
   ! restrict access to all functions
   private
 
-  public :: dlufactor, dluppfactor
+  public :: dlufactor, dluppfactor, thomas
 
 contains
+ 
+  !============================================================
+  ! Thomas algorithm for efficent solution of banded systems
+  !===========================================================
   
+   pure subroutine thomas(bandwidth, A, b)
+
+    implicit none 
+
+    ! Arguments
+    integer , intent(in)    :: bandwidth
+    real(dp), intent(inout) :: A(:,:), b(:)
+
+    ! Local variables
+    real(dp) :: coeff
+    integer  :: i
+    integer  :: n 
+
+    ! Find the number of unknowns
+    n = size(b)
+
+    ! TODO generalize this for pentadiagonal matrix too
+
+    ! Forward elimination
+    do i = 2, n
+       coeff  = A(i,1)/A(i-1,2)
+       A(i,2) = A(i,2)-coeff*A(i-1,3)
+       b(i)   = b(i)-A(i,1)*b(i-1)
+    end do
+
+    ! Back substitution
+    b(n) = b(n)/A(n,2)
+    do i = n-1, 1, -1
+       b(i) = (b(i)- A(i,3)*b(i+1))/A(i,2)
+    end do
+    
+  end subroutine thomas
+
   !===================================================================!
   ! Plain vanilla LU factorization algorithm without pivoting. How to
   ! store L and U into the original matrix (like LAPACK)?
