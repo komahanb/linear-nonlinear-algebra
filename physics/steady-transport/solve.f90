@@ -2,18 +2,29 @@ program test
 
   ! Import dependencies
   use linear_algebra, only: solve
+  use linear_transport, only: exact1, assemble_system
+  use nonlinear_transport, only: exact2, exact3, exact4!, assemble_system2,  assemble_system3,  assemble_system4 
 
   implicit none
 
+  call solve_linear_transport()
+  !call solve_nonlinear_transport()
+
+contains
+
+subroutine solve_linear_transport()
+  
+  implicit none
+
   ! Problem setup
-  integer, parameter :: npts = 20
+  integer, parameter :: npts = 200
 
   ! Matrices and vectors
   real(8), allocatable, dimension(:,:) :: A
   real(8), allocatable, dimension(:)   :: phi, b
 
   ! Physics parameters
-  integer :: flag, i, k
+  integer :: flag, i, j
 
   ! Filename
   character(len=50) :: filename
@@ -28,7 +39,7 @@ program test
   ! Allocate matrices
   allocate(A(npts, npts))
   A = 0.0d0
-
+  
   ! Allocate vectors
   allocate(b(npts), phi(npts))
   b = 0.0d0
@@ -37,78 +48,24 @@ program test
   ! Assemble linear system
   call assemble_system(0.0d0, 1.0d0, npts, A, b)
 
+  ! Print first order coeffs
+  do i = 1, npts
+     !write(*,"(100g15.5)") (A(i,j), j = 1, npts)
+  enddo
+
   ! Solve the system
-  phi = solve(A, b)
+  phi = solve(A, b) 
 
   ! Write output
   do i = 1, npts
-     write(11, *) dble(i)/dble(npts), phi(i), exact1(dble(i)/dble(npts))
+     write(11, *) dble(i)/dble(npts), phi(i), exact1(dble(i)/dble(npts)), &
+          & exact2(dble(i)/dble(npts)), exact3(dble(i)/dble(npts)), exact4(dble(i)/dble(npts))
   end do
 
   close(11)
 
   deallocate(A,phi,b)
 
-contains
-
-  pure real(8) function exact1(x)
-
-    real(8), intent(in) :: x
-    real(8), parameter  :: L     = 1.0d0
-    real(8), parameter  :: gamma = 0.1d0
-    real(8), parameter  :: U     = 1.0d0
-
-    exact1 = 1.0d0 - 1.0d0*(exp(x*U/gamma)-1.0d0)/(exp(L*U/gamma)-1.0d0)
-    
-  end function exact1
-  
-  ! Model problem to solve
-  subroutine assemble_system(a, b, npts, V, rhs)
-
-    real(8), intent(in)  :: a, b ! bound of domain
-    real(8), intent(out) :: V(npts,npts)
-    real(8), intent(out) :: rhs(npts)
-    integer              :: npts ! number of points
-
-    ! Local variables
-    real(8) :: u, gamma
-    real(8) :: aa, bb, cc
-    real(8) :: h    
-    integer :: m, n, i, j
-
-    ! Mesh spacing
-    h = (b-a)/dble(npts+1)
-
-    ! Problem parameters
-    u     = 1.0d0
-    gamma = 0.1d0    
-    aa    = -u/(2.0d0*h) - gamma/(h*h)
-    bb    = 2.0d0*gamma/(h*h)
-    cc    = u/(2.0d0*h) - gamma/(h*h)
-
-    ! Prepare matrix
-    V = 0.0d0    
-    m = npts
-    n = npts
-    do i = 1, m
-       do j = 1, n
-          if (i .eq. j-1) then
-             V(i,j) = aa
-          else if (i .eq. j+1) then           
-             V(i,j) = cc
-          else if (i .eq. j) then           
-             V(i,i) = bb
-          else
-             ! skip zeros
-          end if
-       end do
-    end do
-   
-    ! Assemble the RHS
-    rhs = 0.0d0
-    rhs(1) = 1.0d0
-    rhs(npts) = 0.0d0
-
-  end subroutine assemble_system
+end subroutine solve_linear_transport
 
 end program test

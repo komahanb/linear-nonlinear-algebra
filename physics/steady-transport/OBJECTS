@@ -1,2 +1,4 @@
 objects=\
+linear_transport.o \
+nonlinear_transport.o \
 solve.o
