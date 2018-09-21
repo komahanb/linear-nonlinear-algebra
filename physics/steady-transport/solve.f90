@@ -1,53 +1,220 @@
 program test
 
-  ! Import dependencies
+  ! Import solvers
   use linear_algebra, only: solve
+  use direct_linear_solve, only: tdma
+
+  ! Import physics
   use linear_transport, only: exact1, assemble_system
-  use nonlinear_transport, only: exact2, exact3, exact4!, assemble_system2,  assemble_system3,  assemble_system4 
-  use direct_linear_solve, only: thomas
+  use nonlinear_transport, only: exact2, exact3, exact4, assemble_residual_jacobian
 
   implicit none
 
-  call solve_linear_transport()
-  
-  ! call solve_nonlinear_transport()
-  ! call test_thomas(8)
+  ! Problem setup
+  logical, parameter :: sparse = .false.
+  integer, parameter :: sizes(10) = [10,20,30,40,50,60, 70, 80, 90, 100]
+
+  ! Solve the linear transport
+  call solve_linear_transport(sparse, sizes, exact1)
+
+  ! Solve all three nonlinear transport cases
+  call solve_nonlinear_transport(sparse, sizes, 1, exact2)
+  call solve_nonlinear_transport(sparse, sizes, 2, exact3)
+  call solve_nonlinear_transport(sparse, sizes, 3, exact4)
 
 contains
-  
-  subroutine solve_linear_transport()
 
-    implicit none
+  !===================================================================!
+  ! Setup of nonlinear transport equation
+  !===================================================================!
+  
+  subroutine solve_nonlinear_transport(sparse, sizes, case, exact)
+    
+    interface
+       pure real(8) function exact(x)
+         real(8), intent(in) ::  x
+       end function exact
+    end interface
 
     ! Problem setup
-    logical, parameter :: sparse = .false.
-    integer, parameter :: sizes(10) = [10,20,30,40,50,60, 70, 80, 90, 100]
+    logical, intent(in) :: sparse
+    integer, intent(in) :: sizes(:)
+    integer, intent(in) :: case
 
+    real(8), parameter :: tau_r = 1.0d-12
+    real(8), parameter :: tau_a = 1.0d-9
+    integer, parameter :: max_it = 100
+
+    ! Matrices and vectors
+    real(8), allocatable, dimension(:,:) :: A
+    real(8), allocatable, dimension(:)   :: phi, Q, R
+
+    integer :: i, j
+    real(8) :: xi, rmse, walltime, time_start, time_end
+
+    integer :: npts
+    character(len=100) :: filename
+    character(len=100) :: strnpts
+    character(len=100) :: strcase
+
+    ! Open file  
+    open(12, file='nonlinear_summary.dat')
+    write(12, *) "npts ", "h ", "rmse ", "wall_time"
+
+    do j = 1, size(sizes)
+
+       npts = sizes(j)
+       
+       ! Create filename and open
+       write(strnpts,*) int(npts)
+       write(strcase,*) int(case)
+       filename = 'nonlinear-solution' // '-npts-' // trim(adjustl(strnpts)) // "-case-"// trim(adjustl(strcase)) //'.dat'
+       open(11, file=filename)
+       write(11, *) "x ", "phihat ", "phi"
+
+       call cpu_time(time_start)
+
+       allocate(R(npts))
+       allocate(A(npts, npts))
+
+       ! Initial solution
+       allocate(phi(npts))  
+       do i = 1, npts
+          xi = dble(i)/dble(npts+1)
+          phi(i) = exact(xi)
+       end do
+
+       ! Set the source term
+       allocate(Q(npts))
+       if (case.eq.1) then
+          Q = 0.0d0
+       else if (case.eq.2) then 
+          Q = 0.1d0
+       else 
+          do i = 1, npts
+             xi = dble(i)/dble(npts+1)
+             Q(i) = 0.1d0*xi
+          end do
+       end if
+
+       ! Solve the nonlinear system
+       call newton(sparse, tau_r, tau_a, max_it, npts, phi, Q, A, R)
+       call cpu_time(time_end)
+       walltime = time_end - time_start
+
+       ! Compare solution to exact and write output
+       rmse = 0.0d0
+       do i = 1, npts
+          xi = dble(i)/dble(npts+1)
+          write(11, *) xi, phi(i), exact(xi)
+          rmse = rmse + (exact(xi)-phi(i))**2.0d0
+       end do
+       rmse = rmse/sqrt(dble(npts))
+       write(12, *) npts, 1.0d0/dble(npts+1), rmse, walltime
+
+       close(11)
+
+       deallocate(R,A,phi,Q)
+
+    end do
+
+    close(12)
+
+  end subroutine solve_nonlinear_transport
+  
+  !===================================================================!
+  ! Newton method for solving nonlinear system that features quadratic
+  ! convergence
+  !===================================================================!
+  
+  subroutine newton(sparse, tau_r, tau_a, max_it, npts, phi, Q, jac, res )
+
+    logical, intent(in)    :: sparse
+    real(8), intent(in)    :: tau_r, tau_a
+    integer, intent(in)    :: max_it
+    integer, intent(in)    :: npts
+    real(8), intent(inout) :: phi(:)
+    real(8), intent(in)    :: Q(:)
+    real(8), intent(inout) :: res(:)
+    real(8), intent(inout) :: jac(:,:)
+    
+    ! local variables
+    real(8) :: r0 
+    real(8) :: s(size(res))
+    integer :: iter
+  
+    call assemble_residual_jacobian(sparse, npts, phi, Q, jac, res)
+
+    ! Initial residual
+    r0 = norm2(res)
+
+    iter = 0
+    do while (norm2(res) > tau_r*r0 + tau_a .and. iter .le. max_it)
+
+       ! Increment the iteration count
+       iter = iter + 1
+
+       ! Residual and jacobian
+       call assemble_residual_jacobian(sparse, npts, phi, Q, jac, res)
+       
+       ! Solve the linear system based on matrix storage format
+       if (sparse .eqv. .true.) then
+          call tdma(jac, res, s)
+       else
+          s = solve(jac, res)
+       end if
+
+       ! Apply the update
+       phi = phi + s
+
+       ! print newton solve details
+       print *, iter, norm2(res)
+
+    end do
+
+  end subroutine newton
+
+  !===================================================================!
+  ! Setup of linear transport equation
+  !===================================================================!
+
+  subroutine solve_linear_transport(sparse, sizes, exact)
+
+    interface
+       pure real(8) function exact(x)
+         real(8), intent(in) ::  x
+       end function exact
+    end interface
+
+    ! Problem setup
+    logical, intent(in) :: sparse
+    integer, intent(in) :: sizes(:)
+  
     ! Matrices and vectors
     real(8), allocatable, dimension(:,:) :: A
     real(8), allocatable, dimension(:)   :: phi, b
 
     real(8) :: xi, rmse, walltime, time_start, time_end
-    
+
     ! Physics parameters
-    integer :: flag, i, j
+    integer :: i, j
     integer :: npts
-    
+
     ! Filename
-    character(len=50) :: filename
-    character(len=50) :: strnpts
-    
+    character(len=100) :: filename
+    character(len=100) :: strnpts
+
     ! Open file  
-    open(12, file='summary.dat')
+    open(12, file='linear_summary.dat')
     write(12, *) "npts ", "h ", "rmse ", "wall_time"
-    
+
     do j = 1, size(sizes)
 
        npts = sizes(j)
 
        ! Create filename and open
        write(strnpts,*) int(npts)
-       filename = 'solution' // '-npts-' // trim(adjustl(strnpts)) // '.dat'    
+       filename = 'linear-solution' // '-npts-' // trim(adjustl(strnpts)) // '.dat'    
        open(11, file=filename)
        write(11, *) "x ", "phihat ", "phi"
 
@@ -61,27 +228,22 @@ contains
        allocate(b(npts), phi(npts))
        call assemble_system(0.0d0, 1.0d0, npts, A, b, sparse)
 
-       !do i = 1, npts
-       !   write(*,'(10f10.4)') (A(i,j), j = 1, 3), b(i)
-       !end do
-
        ! Solve the system
        if (sparse .eqv. .true.) then
-          call thomas(A, b)
-          phi = b
+          call tdma(A, b, phi)
        else
           phi = solve(A, b)
        end if
 
        call cpu_time(time_end)
        walltime = time_end - time_start
-       
+
        ! Write output
        rmse = 0.0d0
        do i = 1, npts
-          xi = dble(i)/dble(npts)
-          write(11, *) xi, phi(i), exact1(xi)
-          rmse = rmse + (exact1(xi)-phi(i))**2.0d0
+          xi = dble(i)/dble(npts+1)
+          write(11, *) xi, phi(i), exact(xi)
+          rmse = rmse + (exact(xi)-phi(i))**2.0d0
        end do
        rmse = rmse/sqrt(dble(npts))
        write(12, *) npts, 1.0d0/dble(npts+1), rmse, walltime
@@ -94,43 +256,6 @@ contains
 
     close(12)
 
-     end subroutine solve_linear_transport
-
-  subroutine test_thomas(n)
-
-    implicit none
-
-    ! Arguments
-    integer, intent(in) :: n 
-
-    ! Local variables
-    integer, parameter :: bandwidth = 3
-    real(8)            :: A(n, bandwidth), b(n), x(n)
-    integer            :: i, j
-
-    ! Setup the matrix
-    A(1,:) = [0.0d0, 4.0d0, -1.0d0]
-    do concurrent(i=2:n-1)
-       A(i,:) = [-1.0d0, 4.0d0, -1.0d0]
-    end do
-    A(n,:) = [-1.0d0, 4.0d0, 0.0d0]
-    
-    ! Setup right hand side
-    b = 0.0d0
-    b(n) = 16.0d0
-
-    do i = 1, n
-       write(*,'(10f10.6)') (A(i,j), j = 1, bandwidth), b(i)
-    end do
-    
-    ! Solve the linear system Ax = b
-    call thomas(A, b)
-
-    print *, "solution is"
-    do i = 1, n
-       write(*,'(f10.6)') b(i)
-    end do
-
-  end subroutine test_thomas
+  end subroutine solve_linear_transport
 
 end program

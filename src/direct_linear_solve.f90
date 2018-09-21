@@ -13,45 +13,49 @@ module direct_linear_solve
   ! restrict access to all functions
   private
 
-  public :: dlufactor, dluppfactor, thomas
+  public :: dlufactor, dluppfactor, tdma
 
 contains
  
-  !============================================================
-  ! Thomas algorithm for efficent solution of banded systems
-  !===========================================================
-  
-   pure subroutine thomas(A, b)
+  !===================================================================!
+  ! Tridiagonal matrix algorithm for solving sparse tridiagonal
+  ! systems using Thomas Algorithm. All input arrays are destroyed.
+  ! 
+  ! https://www.cfd-online.com/Wiki/Tridiagonal_matrix_algorithm_-_TDMA_(Thomas_algorithm)
+  !===================================================================!
 
-    implicit none 
+  pure subroutine tdma(mat, rhs, x)
 
     ! Arguments
-    real(dp), intent(inout) :: A(:,:), b(:)
+    real(dp), intent(inout)  :: mat(:,:)
+    real(dp), intent(inout)  :: rhs(:)
+    real(dp), intent(out)    :: x(:)
 
     ! Local variables
-    real(dp) :: coeff
-    integer  :: i
-    integer  :: n 
+    integer  :: k, n
+    real(dp) :: m
 
-    ! Find the number of unknowns
-    n = size(b)
+    associate(A=>mat(:,1), B=>mat(:,2), C=>mat(:,3), D=>rhs)
 
-    ! TODO generalize this for pentadiagonal matrix too
+      ! Find the size of linear system
+      n = size(d)
 
-    ! Forward elimination
-    do i = 2, n
-       coeff  = A(i,1)/A(i-1,2)
-       A(i,2) = A(i,2)-coeff*A(i-1,3)
-       b(i)   = b(i)-A(i,1)*b(i-1)
-    end do
+      ! Forward elimination
+      fwd_elim: do k = 2, n
+         m = A(k)/b(k-1)
+         b(k) = b(k) - m*c(k-1)
+         d(k) = d(k) - m*d(k-1)
+      end do fwd_elim
 
-    ! Back substitution
-    b(n) = b(n)/A(n,2)
-    do i = n-1, 1, -1
-       b(i) = (b(i)- A(i,3)*b(i+1))/A(i,2)
-    end do
-    
-  end subroutine thomas
+      ! Backward substitution    
+      x(n) = d(n)/b(n)
+      back_sub: do k = n-1, 1, -1
+         x(k) = (d(k)-c(k)*x(k+1))/b(k)
+      end do back_sub
+
+    end associate
+
+   end subroutine tdma
 
   !===================================================================!
   ! Plain vanilla LU factorization algorithm without pivoting. How to
