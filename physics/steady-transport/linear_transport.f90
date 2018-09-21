@@ -8,7 +8,7 @@ contains
 
     real(8), intent(in) :: x
     real(8), parameter  :: L     = 1.0d0
-    real(8), parameter  :: gamma = 1.d0
+    real(8), parameter  :: gamma = 0.1d0
     real(8), parameter  :: U     = 1.0d0
 
     exact1 = 1.0d0 - 1.0d0*(exp(x*U/gamma)-1.0d0)/(exp(L*U/gamma)-1.0d0)
@@ -30,7 +30,7 @@ contains
     integer :: m, n, i, j
 
     real(8), parameter  :: L     = 1.0d0
-    real(8), parameter  :: gamma = 1.0d0
+    real(8), parameter  :: gamma = 0.1d0
     real(8), parameter  :: U     = 1.0d0
 
     ! Mesh spacing
@@ -58,13 +58,15 @@ contains
        do i = 1, m
           do j = 1, n
              if (i .eq. j-1) then
-                V(i,j) = aa
-             else if (i .eq. j) then           
-                V(i,i) = bb                
-             else if (i .eq. j+1) then           
+                ! upper diagonal
                 V(i,j) = cc
+             else if (i .eq. j) then
+                ! diagonal
+                V(i,i) = bb                
+             else if (i .eq. j+1) then
+                ! lower diagonal
+                V(i,j) = aa
              else
-                ! skip zeros
              end if
           end do
        end do
@@ -73,8 +75,8 @@ contains
 
     ! Assemble the RHS
     rhs = 0.0d0
-    rhs(1) = 1.0d0
-    rhs(npts) = 0.0d0
+    rhs(1) = -aa*1.0d0
+    rhs(npts) = -cc*0.0d0
 
   end subroutine assemble_system
 

@@ -8,10 +8,10 @@ program test
 
   implicit none
 
-  ! call solve_linear_transport()
+  call solve_linear_transport()
+  
   ! call solve_nonlinear_transport()
-
-  call test_thomas(8)
+  ! call test_thomas(8)
 
 contains
   
@@ -20,8 +20,8 @@ contains
     implicit none
 
     ! Problem setup
-    integer, parameter :: npts = 10
-    logical, parameter :: sparse = .true.
+    integer, parameter :: npts = 100
+    logical, parameter :: sparse = .false.
 
     ! Matrices and vectors
     real(8), allocatable, dimension(:,:) :: A
@@ -49,7 +49,11 @@ contains
     end if
     allocate(b(npts), phi(npts))
     call assemble_system(0.0d0, 1.0d0, npts, A, b, sparse)
-
+    
+    do i = 1, npts
+       write(*,'(10f10.4)') (A(i,j), j = 1, 3), b(i)
+    end do
+    
     ! Solve the system
     if (sparse .eqv. .true.) then
        call thomas(A, b)
@@ -60,8 +64,11 @@ contains
 
     ! Write output
     do i = 1, npts
-       write(11, *) dble(i)/dble(npts), phi(i), exact1(dble(i)/dble(npts)), &
-            & exact2(dble(i)/dble(npts)), exact3(dble(i)/dble(npts)), exact4(dble(i)/dble(npts))
+       write(11, *) dble(i)/dble(npts), phi(i), &
+            & exact1(dble(i)/dble(npts)), &
+            & exact2(dble(i)/dble(npts)), &
+            & exact3(dble(i)/dble(npts)), &
+            & exact4(dble(i)/dble(npts))
     end do
 
     close(11)
