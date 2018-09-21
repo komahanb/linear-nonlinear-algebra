@@ -21,7 +21,7 @@ contains
 
     ! Problem setup
     logical, parameter :: sparse = .false.
-    integer, parameter :: sizes(5) = [10,20,30,40,50]
+    integer, parameter :: sizes(10) = [10,20,30,40,50,60, 70, 80, 90, 100]
 
     ! Matrices and vectors
     real(8), allocatable, dimension(:,:) :: A
@@ -39,7 +39,7 @@ contains
     
     ! Open file  
     open(12, file='summary.dat')
-    write(12, *) "npts ", "h", "rmse ", "wall_time"
+    write(12, *) "npts ", "h ", "rmse ", "wall_time"
     
     do j = 1, size(sizes)
 
