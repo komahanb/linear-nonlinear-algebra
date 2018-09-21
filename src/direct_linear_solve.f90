@@ -21,12 +21,11 @@ contains
   ! Thomas algorithm for efficent solution of banded systems
   !===========================================================
   
-   pure subroutine thomas(bandwidth, A, b)
+   pure subroutine thomas(A, b)
 
     implicit none 
 
     ! Arguments
-    integer , intent(in)    :: bandwidth
     real(dp), intent(inout) :: A(:,:), b(:)
 
     ! Local variables

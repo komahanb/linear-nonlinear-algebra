@@ -8,12 +8,67 @@ program test
 
   implicit none
 
-  !call solve_linear_transport()
-  !call solve_nonlinear_transport()
+  ! call solve_linear_transport()
+  ! call solve_nonlinear_transport()
 
   call test_thomas(8)
 
 contains
+  
+  subroutine solve_linear_transport()
+
+    implicit none
+
+    ! Problem setup
+    integer, parameter :: npts = 10
+    logical, parameter :: sparse = .true.
+
+    ! Matrices and vectors
+    real(8), allocatable, dimension(:,:) :: A
+    real(8), allocatable, dimension(:)   :: phi, b
+
+    ! Physics parameters
+    integer :: flag, i, j
+
+    ! Filename
+    character(len=50) :: filename
+    character(len=50) :: strnpts
+
+    ! Create filename and open
+    write(strnpts,*) int(npts)
+    !filename = 'solution'//"-npts-" // trim(adjustl(strnpts)) //'.dat'
+    filename = 'solution.dat'
+    
+    open(11, file=filename)
+    write(11, *) "phi ", "u"
+
+    if (sparse .eqv. .true.) then    
+       allocate(A(npts, 3))  
+    else
+       allocate(A(npts, npts))  
+    end if
+    allocate(b(npts), phi(npts))
+    call assemble_system(0.0d0, 1.0d0, npts, A, b, sparse)
+
+    ! Solve the system
+    if (sparse .eqv. .true.) then
+       call thomas(A, b)
+       phi = b
+    else
+       phi = solve(A, b)
+    end if
+
+    ! Write output
+    do i = 1, npts
+       write(11, *) dble(i)/dble(npts), phi(i), exact1(dble(i)/dble(npts)), &
+            & exact2(dble(i)/dble(npts)), exact3(dble(i)/dble(npts)), exact4(dble(i)/dble(npts))
+    end do
+
+    close(11)
+
+    deallocate(A,phi,b)
+
+  end subroutine solve_linear_transport
   
   subroutine test_thomas(n)
 
@@ -24,81 +79,32 @@ contains
 
     ! Local variables
     integer, parameter :: bandwidth = 3
-    real(8) :: A(n,bandwidth), b(n)
-    integer :: i
+    real(8)            :: A(n, bandwidth), b(n), x(n)
+    integer            :: i, j
 
     ! Setup the matrix
     A(1,:) = [0.0d0, 4.0d0, -1.0d0]
-    do concurrent(i = 2:n-1)
+    do concurrent(i=2:n-1)
        A(i,:) = [-1.0d0, 4.0d0, -1.0d0]
     end do
     A(n,:) = [-1.0d0, 4.0d0, 0.0d0]
-
+    
     ! Setup right hand side
     b = 0.0d0
-    b(1) = 10.0d0
+    b(n) = 16.0d0
 
+    do i = 1, n
+       write(*,'(10f10.6)') (A(i,j), j = 1, bandwidth), b(i)
+    end do
+    
     ! Solve the linear system Ax = b
-    call thomas(bandwidth, A, b)
+    call thomas(A, b)
 
-    print *, b
+    print *, "solution is"
+    do i = 1, n
+       write(*,'(f10.6)') b(i)
+    end do
 
   end subroutine test_thomas
 
-subroutine solve_linear_transport()
-  
-  implicit none
-
-  ! Problem setup
-  integer, parameter :: npts = 200
-
-  ! Matrices and vectors
-  real(8), allocatable, dimension(:,:) :: A
-  real(8), allocatable, dimension(:)   :: phi, b
-
-  ! Physics parameters
-  integer :: flag, i, j
-
-  ! Filename
-  character(len=50) :: filename
-  character(len=50) :: strnpts
-
-  ! Create filename and open
-  write(strnpts,*) int(npts)
-  filename = 'case1-solution'//"-npts-" // trim(adjustl(strnpts)) //'.dat'
-  open(11,file=filename)
-  write(11,*) "phi ", "u"
-
-  ! Allocate matrices
-  allocate(A(npts, npts))
-  A = 0.0d0
-  
-  ! Allocate vectors
-  allocate(b(npts), phi(npts))
-  b = 0.0d0
-  phi = 0.0d0
-
-  ! Assemble linear system
-  call assemble_system(0.0d0, 1.0d0, npts, A, b)
-
-  ! Print first order coeffs
-  do i = 1, npts
-     !write(*,"(100g15.5)") (A(i,j), j = 1, npts)
-  enddo
-
-  ! Solve the system
-  phi = solve(A, b) 
-
-  ! Write output
-  do i = 1, npts
-     write(11, *) dble(i)/dble(npts), phi(i), exact1(dble(i)/dble(npts)), &
-          & exact2(dble(i)/dble(npts)), exact3(dble(i)/dble(npts)), exact4(dble(i)/dble(npts))
-  end do
-
-  close(11)
-
-  deallocate(A,phi,b)
-
-end subroutine solve_linear_transport
-
-end program test
+end program
