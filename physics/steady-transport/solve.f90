@@ -20,63 +20,82 @@ contains
     implicit none
 
     ! Problem setup
-    integer, parameter :: npts = 100
     logical, parameter :: sparse = .false.
+    integer, parameter :: sizes(5) = [10,20,30,40,50]
 
     ! Matrices and vectors
     real(8), allocatable, dimension(:,:) :: A
     real(8), allocatable, dimension(:)   :: phi, b
 
+    real(8) :: xi, rmse, walltime, time_start, time_end
+    
     ! Physics parameters
     integer :: flag, i, j
-
+    integer :: npts
+    
     ! Filename
     character(len=50) :: filename
     character(len=50) :: strnpts
-
-    ! Create filename and open
-    write(strnpts,*) int(npts)
-    !filename = 'solution'//"-npts-" // trim(adjustl(strnpts)) //'.dat'
-    filename = 'solution.dat'
     
-    open(11, file=filename)
-    write(11, *) "phi ", "u"
-
-    if (sparse .eqv. .true.) then    
-       allocate(A(npts, 3))  
-    else
-       allocate(A(npts, npts))  
-    end if
-    allocate(b(npts), phi(npts))
-    call assemble_system(0.0d0, 1.0d0, npts, A, b, sparse)
+    ! Open file  
+    open(12, file='summary.dat')
+    write(12, *) "npts ", "h", "rmse ", "wall_time"
     
-    do i = 1, npts
-       write(*,'(10f10.4)') (A(i,j), j = 1, 3), b(i)
+    do j = 1, size(sizes)
+
+       npts = sizes(j)
+
+       ! Create filename and open
+       write(strnpts,*) int(npts)
+       filename = 'solution' // '-npts-' // trim(adjustl(strnpts)) // '.dat'    
+       open(11, file=filename)
+       write(11, *) "x ", "phihat ", "phi"
+
+       call cpu_time(time_start)
+
+       if (sparse .eqv. .true.) then    
+          allocate(A(npts, 3))  
+       else
+          allocate(A(npts, npts))  
+       end if
+       allocate(b(npts), phi(npts))
+       call assemble_system(0.0d0, 1.0d0, npts, A, b, sparse)
+
+       !do i = 1, npts
+       !   write(*,'(10f10.4)') (A(i,j), j = 1, 3), b(i)
+       !end do
+
+       ! Solve the system
+       if (sparse .eqv. .true.) then
+          call thomas(A, b)
+          phi = b
+       else
+          phi = solve(A, b)
+       end if
+
+       call cpu_time(time_end)
+       walltime = time_end - time_start
+       
+       ! Write output
+       rmse = 0.0d0
+       do i = 1, npts
+          xi = dble(i)/dble(npts)
+          write(11, *) xi, phi(i), exact1(xi)
+          rmse = rmse + (exact1(xi)-phi(i))**2.0d0
+       end do
+       rmse = rmse/sqrt(dble(npts))
+       write(12, *) npts, 1.0d0/dble(npts+1), rmse, walltime
+
+       ! Free resources
+       close(11)
+       deallocate(A, phi, b)
+
     end do
-    
-    ! Solve the system
-    if (sparse .eqv. .true.) then
-       call thomas(A, b)
-       phi = b
-    else
-       phi = solve(A, b)
-    end if
 
-    ! Write output
-    do i = 1, npts
-       write(11, *) dble(i)/dble(npts), phi(i), &
-            & exact1(dble(i)/dble(npts)), &
-            & exact2(dble(i)/dble(npts)), &
-            & exact3(dble(i)/dble(npts)), &
-            & exact4(dble(i)/dble(npts))
-    end do
+    close(12)
 
-    close(11)
+     end subroutine solve_linear_transport
 
-    deallocate(A,phi,b)
-
-  end subroutine solve_linear_transport
-  
   subroutine test_thomas(n)
 
     implicit none
