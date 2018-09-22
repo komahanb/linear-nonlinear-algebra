@@ -29,7 +29,7 @@ contains
   end function exact2
  
   ! Model problem to solve
-  subroutine assemble_residual_jacobian(sparse, npts, phi, Q, V, R)
+  pure subroutine assemble_residual_jacobian(sparse, npts, phi, Q, V, R)
 
     logical, intent(in) :: sparse 
     integer, intent(in) :: npts 

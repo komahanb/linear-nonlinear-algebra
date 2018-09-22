@@ -16,13 +16,13 @@ contains
   end function exact1
   
   ! Model problem to solve
-  subroutine assemble_system(a, b, npts, V, rhs, sparse)
+  pure subroutine assemble_system(a, b, npts, V, rhs, sparse)
 
     logical, intent(in)  :: sparse 
     real(8), intent(in)  :: a, b ! bound of domain
     real(8), intent(out) :: V(:,:)
     real(8), intent(out) :: rhs(:)
-    integer              :: npts ! number of points
+    integer, intent(in)  :: npts ! number of points
 
     ! Local variables
     real(8) :: aa, bb, cc

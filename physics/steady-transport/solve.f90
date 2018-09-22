@@ -11,8 +11,9 @@ program test
   implicit none
 
   ! Problem setup
-  logical, parameter :: sparse = .false.
-  integer, parameter :: sizes(10) = [10,20,30,40,50,60, 70, 80, 90, 100]
+  logical, parameter :: sparse = .true.
+  integer, parameter :: sizes(7) = [10-1, 50-1, 100-1, 500-1, 1000-1, 5000-1, 10000-1]
+  !integer, parameter :: sizes(5) = [10-1, 20-1, 30-1, 40-1, 50-1]
 
   ! Solve the linear transport
   call solve_linear_transport(sparse, sizes, exact1)
@@ -58,7 +59,8 @@ contains
     character(len=100) :: strcase
 
     ! Open file  
-    open(12, file='nonlinear_summary.dat')
+    write(strcase,*) int(case)
+    open(12, file='nonlinear_summary'//'-case-'//trim(adjustl(strcase))//'.dat')
     write(12, *) "npts ", "h ", "rmse ", "wall_time"
 
     do j = 1, size(sizes)
@@ -66,8 +68,7 @@ contains
        npts = sizes(j)
        
        ! Create filename and open
-       write(strnpts,*) int(npts)
-       write(strcase,*) int(case)
+       write(strnpts,*) int(npts+1)
        filename = 'nonlinear-solution' // '-npts-' // trim(adjustl(strnpts)) // "-case-"// trim(adjustl(strcase)) //'.dat'
        open(11, file=filename)
        write(11, *) "x ", "phihat ", "phi"
@@ -110,7 +111,7 @@ contains
           rmse = rmse + (exact(xi)-phi(i))**2.0d0
        end do
        rmse = rmse/sqrt(dble(npts))
-       write(12, *) npts, 1.0d0/dble(npts+1), rmse, walltime
+       write(12, *) npts+1, 1.0d0/dble(npts+1), rmse, walltime
 
        close(11)
 
@@ -213,12 +214,12 @@ contains
        npts = sizes(j)
 
        ! Create filename and open
-       write(strnpts,*) int(npts)
+       write(strnpts,*) int(npts+1)
        filename = 'linear-solution' // '-npts-' // trim(adjustl(strnpts)) // '.dat'    
        open(11, file=filename)
        write(11, *) "x ", "phihat ", "phi"
 
-       call cpu_time(time_start)
+       call cpu_time(time_start)       
 
        if (sparse .eqv. .true.) then    
           allocate(A(npts, 3))  
@@ -246,7 +247,7 @@ contains
           rmse = rmse + (exact(xi)-phi(i))**2.0d0
        end do
        rmse = rmse/sqrt(dble(npts))
-       write(12, *) npts, 1.0d0/dble(npts+1), rmse, walltime
+       write(12, *) npts+1, 1.0d0/dble(npts+1), rmse, walltime
 
        ! Free resources
        close(11)
