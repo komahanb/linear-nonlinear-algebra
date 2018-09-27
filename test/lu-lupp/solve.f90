@@ -8,19 +8,18 @@ program test
   implicit none
 
   integer, parameter :: sizes(6) = [200, 400, 800, 1000, 2000, 4000]
-
   integer :: i, npts
 
-!!$  ! Run for all problem sizes
-!!$  do i = 1, size(sizes)
-!!$
-!!$     npts = sizes(i)
-!!$
-!!$     call gesolve(npts)
-!!$     call geppsolve(npts)
-!!$     !call exact(npts)
-!!$
-!!$  end do
+  ! Run for all problem sizes
+  do i = 1, size(sizes)
+
+     npts = sizes(i)
+
+     call gesolve(npts)
+     call geppsolve(npts)
+     !call exact(npts)
+
+  end do
 
 !  call time_report(.false.)
 !  call time_report(.true.)

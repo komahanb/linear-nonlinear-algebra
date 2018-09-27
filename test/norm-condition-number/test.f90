@@ -14,17 +14,13 @@ program test
   real(8)              :: avg(2), avgcond
   integer              :: matsize
   integer              :: trial
-
-  integer, parameter :: npoints = 100000
-  real(8) :: array(npoints)
-  integer :: i
-
+  
   ! Open file handle for output
   open(11, file='problem4.dat')  
   write(11,'(4A20)') 'm', 'L1Norm/L2Norm', 'L2Norm/LinfNorm', 'kappa'
   
   ! For increasing matrix size
-  do matsize = 100, 1000, 100
+  do matsize = 1000, 10000, 1000
 
      ! Memory allocations
      allocate(L(matsize,matsize))
@@ -32,12 +28,12 @@ program test
      ! Conduct 100 random trials for statistics
      do trial = 1, ntrials
 
-        call get_random_lower(L)     ! fix martrix entries
+        call get_random_lower(L)
                             
         ! Get the 2 norm condition number
-        condn(trial) = cond(L,2) ! fix condition number evaluation
+        condn(trial) = cond(L,2)
 
-        l1norm(trial)   = matnorm(L, 1) ! fix matrix norms
+        l1norm(trial)   = matnorm(L, 1)
         l2norm(trial)   = matnorm(L, 2)
         linfnorm(trial) = matnorm(L, 0)
 
@@ -50,16 +46,17 @@ program test
      avg(1) = sum(ratio(:,1))/dble(ntrials)
      avg(2) = sum(ratio(:,2))/dble(ntrials)
      avgcond = sum(condn)/dble(ntrials)
+
+     ! Write output
      write(11,*) matsize, avg(1), avg(2), avgcond
      print *,  matsize, avg(1), avg(2), avgcond
 
+     ! Free resources
      deallocate(L)
 
   end do
 
   close(11)
-
-  stop
 
 contains
   
