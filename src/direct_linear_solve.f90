@@ -15,10 +15,61 @@ module direct_linear_solve
   
   public :: tdma
   public :: dlufactor, dluppfactor
-  public :: mgs_qrfactor, cgs_qrfactor
+  public :: mgs_qrfactor, cgs_qrfactor, householder
 
 contains
+
+  !===================================================================!
+  ! QR facorization using Householder. The upper triangular part of a
+  ! contains R, whereas the lower triangular part contains the vectors
+  ! necessary to solve for the right hand side.
+  !===================================================================!
   
+  pure subroutine householder(A)
+
+    ! Arguments
+    real(dp), intent(inout)  :: A(:,:)
+
+    ! Local variables
+    real(dp), allocatable :: x(:), v(:)
+    integer  :: k, j, n, m
+    real(dp) :: scalar
+
+    allocate(x, source = A(:,1))
+    allocate(v, source = A(:,1))
+
+    ! Initialize
+    m = size(A,1)
+    n = size(A,2)
+
+    cols: do k = 1, n
+
+       x = 0
+       v = 0
+       
+       ! Extract the column below the diagonal
+       x(k:m) = A(k:m, k)
+
+       ! Fimd the reflection vector 
+       v(k:m) = x(k:m)
+       v(k) = v(k) + sign(norm2(x(k:m)),x(k))
+
+       ! Normalize the reflection vector
+       v(k:m) = v(k:m)/norm2(v(k:m))
+
+       ! Perform householder transformation to zero out the lower
+       ! entries except one for each column of the matrix
+       do j = k , n
+          scalar = dot_product(v(k:m), A(k:m,j))
+          A(k:m,j) = A(k:m,j) - 2.0_dp*scalar*v(k:m)
+       end do
+
+    end do cols
+
+    deallocate(x,v)
+
+  end subroutine householder
+
   !===================================================================!
   ! QR facorization using MGS
   !===================================================================!
@@ -32,14 +83,16 @@ contains
     integer , intent(out)    :: info
 
     ! Local variables
-    integer :: i, j, m
+    integer :: i, j, n
 
     ! Initialize
-    m = size(A,1)
+    n = size(A,2)
 
-    cols: do i = 1, m
+    R = 0
+    
+    cols: do i = 1, n
        Q(:,i) = A(:,i)
-       row: do j = 1, 1-i
+       row: do j = 1, i-1
           R(j,i) = dot_product(Q(:,j),Q(:,i))
           Q(:,i) = Q(:,i) - R(j,i)*Q(:,j)
        end do row
@@ -48,7 +101,7 @@ contains
     end do cols
 
   end subroutine mgs_qrfactor
-
+  
   !===================================================================!
   ! QR facorization using CGS
   !===================================================================!
@@ -62,14 +115,16 @@ contains
     integer , intent(out)    :: info
 
     ! Local variables
-    integer :: i, j, m
+    integer :: i, j, n
 
     ! Initialize
-    m = size(A,1)
+    n = size(A,2)
 
-    cols: do i = 1, m
+    R = 0
+
+    cols: do i = 1, n
        Q(:,i) = A(:,i)
-       row: do j = 1, 1-i
+       row: do j = 1, i-1
           R(j,i) = dot_product(Q(:,j),A(:,i))
           Q(:,i) = Q(:,i) - R(j,i)*Q(:,j)
        end do row
