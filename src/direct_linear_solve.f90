@@ -12,11 +12,73 @@ module direct_linear_solve
 
   ! restrict access to all functions
   private
-
-  public :: dlufactor, dluppfactor, tdma
+  
+  public :: tdma
+  public :: dlufactor, dluppfactor
+  public :: mgs_qrfactor, cgs_qrfactor
 
 contains
- 
+  
+  !===================================================================!
+  ! QR facorization using MGS
+  !===================================================================!
+  
+  pure subroutine mgs_qrfactor(A, Q, R, info)
+
+    ! Arguments
+    real(dp), intent(inout)  :: A(:,:)
+    real(dp), intent(inout)  :: Q(:,:)
+    real(dp), intent(inout)  :: R(:,:)
+    integer , intent(out)    :: info
+
+    ! Local variables
+    integer :: i, j, m
+
+    ! Initialize
+    m = size(A,1)
+
+    cols: do i = 1, m
+       Q(:,i) = A(:,i)
+       row: do j = 1, 1-i
+          R(j,i) = dot_product(Q(:,j),Q(:,i))
+          Q(:,i) = Q(:,i) - R(j,i)*Q(:,j)
+       end do row
+       R(i,i) = norm2(Q(:,i))
+       Q(:,i) = Q(:,i)/R(i,i)
+    end do cols
+
+  end subroutine mgs_qrfactor
+
+  !===================================================================!
+  ! QR facorization using CGS
+  !===================================================================!
+  
+  pure subroutine cgs_qrfactor(A, Q, R, info)
+
+    ! Arguments
+    real(dp), intent(inout)  :: A(:,:)
+    real(dp), intent(inout)  :: Q(:,:)
+    real(dp), intent(inout)  :: R(:,:)
+    integer , intent(out)    :: info
+
+    ! Local variables
+    integer :: i, j, m
+
+    ! Initialize
+    m = size(A,1)
+
+    cols: do i = 1, m
+       Q(:,i) = A(:,i)
+       row: do j = 1, 1-i
+          R(j,i) = dot_product(Q(:,j),A(:,i))
+          Q(:,i) = Q(:,i) - R(j,i)*Q(:,j)
+       end do row
+       R(i,i) = norm2(Q(:,i))
+       Q(:,i) = Q(:,i)/R(i,i)
+    end do cols
+
+  end subroutine cgs_qrfactor
+  
   !===================================================================!
   ! Tridiagonal matrix algorithm for solving sparse tridiagonal
   ! systems using Thomas Algorithm. All input arrays are destroyed.
@@ -56,7 +118,7 @@ contains
     end associate
 
    end subroutine tdma
-
+   
   !===================================================================!
   ! Plain vanilla LU factorization algorithm without pivoting. How to
   ! store L and U into the original matrix (like LAPACK)?
