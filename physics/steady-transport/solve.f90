@@ -1,5 +1,7 @@
 program test
 
+  use iso_fortran_env
+  
   ! Import solvers
   use linear_algebra, only: solve
   use direct_linear_solve, only: tdma
@@ -9,7 +11,9 @@ program test
   use nonlinear_transport, only: exact2, exact3, exact4, assemble_residual_jacobian
 
   implicit none
-
+  
+  type(event_type) :: event[*]
+  
   ! Problem setup
   logical, parameter :: sparse = .true.
   integer, parameter :: sizes(7) = [10-1, 50-1, 100-1, 500-1, 1000-1, 5000-1, 10000-1]
@@ -42,8 +46,8 @@ contains
     integer, intent(in) :: sizes(:)
     integer, intent(in) :: case
 
-    real(8), parameter :: tau_r = 1.0d-12
-    real(8), parameter :: tau_a = 1.0d-9
+    real(8), parameter :: tau_r = 1.0d-16
+    real(8), parameter :: tau_a = 1.0d-13
     integer, parameter :: max_it = 100
 
     ! Matrices and vectors
@@ -58,9 +62,9 @@ contains
     character(len=100) :: strnpts
     character(len=100) :: strcase
 
-    ! Open file  
+    ! Open file
     write(strcase,*) int(case)
-    open(12, file='nonlinear_summary'//'-case-'//trim(adjustl(strcase))//'.dat')
+    open(12, file='nonlinear_summary' // '-case-' // trim(adjustl(strcase))//'.dat')
     write(12, *) "npts ", "h ", "rmse ", "wall_time"
 
     do j = 1, size(sizes)
@@ -110,7 +114,7 @@ contains
           write(11, *) xi, phi(i), exact(xi)
           rmse = rmse + (exact(xi)-phi(i))**2.0d0
        end do
-       rmse = rmse/sqrt(dble(npts))
+       rmse = sqrt(rmse/dble(npts))
        write(12, *) npts+1, 1.0d0/dble(npts+1), rmse, walltime
 
        close(11)
@@ -246,7 +250,7 @@ contains
           write(11, *) xi, phi(i), exact(xi)
           rmse = rmse + (exact(xi)-phi(i))**2.0d0
        end do
-       rmse = rmse/sqrt(dble(npts))
+       rmse = sqrt(rmse/dble(npts))
        write(12, *) npts+1, 1.0d0/dble(npts+1), rmse, walltime
 
        ! Free resources
