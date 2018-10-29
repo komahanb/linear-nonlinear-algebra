@@ -15,14 +15,70 @@ module direct_linear_solve
   
   public :: tdma
   public :: dlufactor, dluppfactor
-  public :: mgs_qrfactor, cgs_qrfactor, householder
+  public :: mgs_qrfactor, cgs_qrfactor, householder, banded_householder
 
 contains
+  
+  !===================================================================!
+  ! QR facorization using Householder algorithm for banded matrix. The
+  ! upper triangular part of a contains R.
+  ! ===================================================================!
+  
+   subroutine banded_householder(A, p, q)
+
+    ! Arguments
+    real(dp), intent(inout)  :: A(:,:)
+    integer, intent(in) :: p, q
+    
+    ! Local variables
+    real(dp), allocatable :: x(:), v(:)
+    integer  :: k, j, n, m, nrows, ncols
+    real(dp) :: scalar
+
+    allocate(x, source = A(:,1))
+    allocate(v, source = A(:,1))
+
+    ! Initialize
+    nrows = size(A,1)
+    ncols = size(A,2)
+
+    cols: do k = 1, ncols
+       
+       x = 0
+       v = 0
+
+       m = min(nrows, k + p)
+
+       !print *, m, nrows, k+p, k, ncols
+       ! Extract the column below the diagonal
+       x(k:m) = A(k:m, k)
+
+       ! print *, x(k:m)
+
+       ! Fimd the reflection vector 
+       v(k:m) = x(k:m)
+       v(k) = v(k) + sign(norm2(x(k:m)),x(k))
+
+       ! Normalize the reflection vector
+       v(k:m) = v(k:m)/norm2(v(k:m))
+
+       ! Perform householder transformation to zero out the lower
+       ! entries except one for each column of the matrix
+       do j = k , min(ncols,k+p+q) !limit to upper bandwidth
+          !print *, 'tranforming col', j, 'rows ', k, m
+          scalar = dot_product(v(k:m), A(k:m,j))
+          A(k:m,j) = A(k:m,j) - 2.0_dp*scalar*v(k:m)
+       end do
+
+    end do cols
+
+    deallocate(x,v)
+
+  end subroutine banded_householder
 
   !===================================================================!
   ! QR facorization using Householder. The upper triangular part of a
-  ! contains R, whereas the lower triangular part contains the vectors
-  ! necessary to solve for the right hand side.
+  ! contains R.
   !===================================================================!
   
   pure subroutine householder(A)
@@ -121,7 +177,6 @@ contains
     n = size(A,2)
 
     R = 0
-
     cols: do i = 1, n
        Q(:,i) = A(:,i)
        row: do j = 1, i-1
