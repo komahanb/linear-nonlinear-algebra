@@ -110,7 +110,7 @@ contains
           write(11, *) xi, phi(i), exact(xi)
           rmse = rmse + (exact(xi)-phi(i))**2.0d0
        end do
-       rmse = rmse/sqrt(dble(npts))
+       rmse = sqrt(rmse/dble(npts))
        write(12, *) npts+1, 1.0d0/dble(npts+1), rmse, walltime
 
        close(11)
@@ -246,7 +246,7 @@ contains
           write(11, *) xi, phi(i), exact(xi)
           rmse = rmse + (exact(xi)-phi(i))**2.0d0
        end do
-       rmse = rmse/sqrt(dble(npts))
+       rmse = sqrt(rmse/dble(npts))
        write(12, *) npts+1, 1.0d0/dble(npts+1), rmse, walltime
 
        ! Free resources
