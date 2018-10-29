@@ -16,6 +16,7 @@ module direct_linear_solve
   public :: tdma
   public :: dlufactor, dluppfactor
   public :: mgs_qrfactor, cgs_qrfactor, householder, banded_householder
+  public :: householder_factorization
 
 contains
   
@@ -125,6 +126,82 @@ contains
     deallocate(x,v)
 
   end subroutine householder
+
+  !===================================================================!
+  ! QR facorization using Householder. The upper triangular part of a
+  ! contains R.
+  !===================================================================!
+  
+  pure subroutine householder_factorization(A, Q, R)
+
+    ! Arguments
+    real(dp), intent(in)  :: A(:,:)
+    real(dp), intent(inout) :: Q(:,:), R(:,:)
+
+    ! Local variables
+    real(dp), allocatable :: x(:), v(:), ek(:)
+    integer  :: k, j, n, m
+    real(dp) :: scalar
+
+    allocate(x, source = A(:,1))
+    allocate(v, source = A(:,1))
+
+    R = A
+
+    ! Initialize
+    m = size(A,1)
+    n = size(A,2)
+
+    findR: do k = 1, n
+
+       x = 0
+       v = 0
+       
+       ! Extract the column below the diagonal
+       x(k:m) = R(k:m, k)
+
+       ! Fimd the reflection vector 
+       v(k:m) = x(k:m)
+       v(k) = v(k) + sign(norm2(x(k:m)),x(k))
+
+       ! Normalize the reflection vector
+       v(k:m) = v(k:m)/norm2(v(k:m))
+
+       ! Perform householder transformation to zero out the lower
+       ! entries except one for each column of the matrix
+       do j = k , n
+          scalar = dot_product(v(k:m), R(k:m,j))
+          R(k:m,j) = R(k:m,j) - 2.0_dp*scalar*v(k:m)
+       end do
+
+    end do findR
+
+    ! Form Q explicitly by dotting with identity vectors
+    findQ: do k = n, 1, -1
+
+       ! Extract the column below the diagonal
+       x(k:m) = A(k:m, k)
+
+       ! Fimd the reflection vector 
+       v(k:m) = x(k:m)
+       v(k) = v(k) + sign(norm2(x(k:m)),x(k))
+
+       ! Normalize the reflection vector
+       v(k:m) = v(k:m)/norm2(v(k:m))
+
+       ! Perform householder transformation to zero out the lower
+       ! entries except one for each column of the matrix
+       Q(k,k) = 1.0d0
+       do j = k, n
+          scalar = dot_product(v(k:m), Q(k:m,j))
+          Q(k:m,j) = Q(k:m,j) - 2.0_dp*scalar*v(k:m)
+       end do
+
+    end do findQ
+
+    deallocate(x,v)
+
+  end subroutine householder_factorization
 
   !===================================================================!
   ! QR facorization using MGS

@@ -4,12 +4,13 @@
 
 program test
 
-  use direct_linear_solve, only : mgs_qrfactor, cgs_qrfactor, householder, banded_householder
+  use direct_linear_solve, only : mgs_qrfactor, cgs_qrfactor, &
+       & householder, banded_householder, householder_factorization
   use linear_algebra, only : eigvals, svdvals
 
   implicit none
 
-  integer, parameter :: n  = 300
+  integer, parameter :: n  = 20
 
   ! integer, parameter :: sizes(10) = [100,200,300,400,500,600,700,800,900,1000]
   ! integer, parameter :: sizes(7) = [100,200,400,800,1600,3200,6400]
@@ -45,8 +46,8 @@ program test
   call cgs_qrfactor(A, Q, RC, info)
   S = matmul(Q,transpose(Q))
   do i = 1, n
-     ! print *, S(i,:)
      S(i,i) = 1.0d0 - S(i,i)
+     print *, S(i,i)
   end do
   
   ! Perform orthogonality check
@@ -57,22 +58,27 @@ program test
   S = matmul(Q,transpose(Q))
   do i = 1, n
      S(i,i) = 1.0d0 - S(i,i)
+     print *, S(i,i)
   end do
   
   ! Perform orthogonality check
   print *, n, norm2(S), norm2(A-matmul(Q,RM))
 
   print *, 'Householder'
-  call householder(A)
+  Q = 0
+  R = 0
+  !call householder(A)
+  call householder_factorization(A, Q, R)
+  S = matmul(Q,transpose(Q))
+  do i = 1, n
+     S(i,i) = 1.0d0 - S(i,i)
+     print *, S(i,i)
+  end do
 
-  ! Perform orthogonality check
-  print *, n, 1.0d0 - norm2(matmul(Q,transpose(Q)))
-
-  
-  !print *, "index ", "cgs ", "mgs ", "householder"
-  !do i = 1, n
-  !   print *, i, RC(i,i), RM(i,i), abs(A(i,i))
-  !end do
+  print *, "index ", "cgs ", "mgs ", "householder"
+  do i = 1, n
+     print *, i, RC(i,i), RM(i,i), abs(R(i,i))
+  end do
 
   stop
   
