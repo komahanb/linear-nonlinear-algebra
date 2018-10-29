@@ -8,9 +8,9 @@ F2008    = yes
 COMPLEX  = no
 
 # optimization level
-DEBUG    = no
+DEBUG    = yes
 PROFILE  = no
-OPTIMIZE = yes
+OPTIMIZE = no
 
 # libraries
 LAPACK   = yes
@@ -48,7 +48,9 @@ ifeq ($(COMPILER),gnu)
 
   # Disable F2008 STD
   ifeq ($(F2008),no)
-    F90FLAGS +=  -DNO_F2008
+    F90FLAGS += -DNO_F2008
+  else
+    F90FLAGS += -std=f2008
   endif
 
   # Debugging
