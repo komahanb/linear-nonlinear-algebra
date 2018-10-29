@@ -45,9 +45,6 @@ contains
 
     cols: do k = 1, ncols
        
-       x = 0
-       v = 0
-
        m = min(nrows, k + p)
 
        !print *, m, nrows, k+p, k, ncols
@@ -153,9 +150,6 @@ contains
     n = size(A,2)
 
     findR: do k = 1, n
-
-       x = 0
-       v = 0
        
        ! Extract the column below the diagonal
        x(k:m) = R(k:m, k)
