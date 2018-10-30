@@ -8,7 +8,7 @@ program test
   use matrix_utils        , only : toepliz
   use direct_linear_solve , only : mgs_qrfactor, cgs_qrfactor, &
        & householder, banded_householder, householder_factorization
-  !use direct_linear_solve , only : givens_factorization
+  use direct_linear_solve , only : givens_factorization, givens
   use linear_algebra      , only : eigvals, svdvals
 
   implicit none
@@ -20,39 +20,64 @@ contains
   subroutine test_givens_factorization
 
     real(dp), allocatable :: A(:,:), Q(:,:), R(:,:), D(:,:)
-    integer , parameter :: matsize = 4
+    integer , parameter :: matsize = 800
     integer :: i
 
     allocate(Q(matsize, matsize))
     allocate(R(matsize, matsize))
     allocate(D(matsize, matsize))
-
     allocate(A(matsize, matsize))
-    call matrix(A)
-    print *, 'matrix'
-    do i = 1, matsize
-       print *, A(i,:)
-    end do
 
+    call matrix(A)
+
+!!$    A(1,:) = [6.0d0, 5.0d0, 0.0d0]
+!!$    A(2,:) = [5.0d0, 1.0d0, 4.0d0]
+!!$    A(3,:) = [0.0d0, 4.0d0, 3.0d0]
+!!$    print *, 'matrix'
+!!$    do i = 1, matsize
+!!$       print *, A(i,:)
+!!$    end do
+    
     print *, 'Performing Givens Transformation'
     Q = 0
     R = 0
-    !call givens_factorization(A, Q, R)
+    call givens_factorization(A, Q, R)
 
-    print *, 'Upper Triangular Matrix'
-    do i = 1, matsize
-       print *, R(i,:)
-    end do
-    
+    ! Check similarity with A
+    print *, 'consistency A' 
+    D = matmul(Q, R)
+    print *, norm2(A - D)
+
     ! Check Orthogonality
     D = matmul(Q,transpose(Q))
-    print *, 'orthogonality'
-    do i = 1, matsize
+    print *, 'orthogonality Q'
+    do i = 1, matsize       
        D(i,i) = 1.0d0 - D(i,i)
-       print *, D(i,i)
     end do
+    print *, norm2(D)
+
+!!$    print *, 'Upper Triangular Matrix R'
+!!$    do i = 1, matsize
+!!$       print *, R(i,:)
+!!$    end do
 
     deallocate(A,Q,R,D)
+    
+    stop
+
+    test_givens: block
+
+      real(dp) :: x(2), y(2)
+
+      call random_number(x)
+      x(1) = 1.0d0
+      x(2) = 0.0d0
+
+      !x(2) = tiny(1.0d0)
+      print *,x
+      call givens(x)
+      print *,x
+    end block test_givens
 
   end subroutine test_givens_factorization
 
@@ -67,10 +92,8 @@ contains
     integer :: m, j
 
     A = 0
-
     call random_number(A(:,1))
     call random_number(A(1,:))
-
     m = size(A, 1)
 
     allocate(diag(m))

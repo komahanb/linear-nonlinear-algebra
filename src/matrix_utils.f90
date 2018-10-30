@@ -1,5 +1,7 @@
 module matrix_utils
 
+  use iso_fortran_env, only : dp => REAL64
+
 contains
  
   !===================================================================!
@@ -8,8 +10,8 @@ contains
 
   subroutine toepliz(col, A)
 
-    real(8), allocatable :: A(:,:)
-    real(8) :: col(:)
+    real(dp), allocatable :: A(:,:)
+    real(dp) :: col(:)
     integer :: m, i, j
 
     m = size(A, 1)
@@ -34,5 +36,18 @@ contains
     end do
 
   end subroutine toepliz
+  
+  subroutine print(matrix)
+
+    real(dp), intent(in) :: matrix(:,:)
+    integer :: i, j, m, n
+
+    m = size(matrix, 1)
+    n = size(matrix, 2)
+
+    do i = 1, m
+       write(*,'(100g15.5)') ( matrix(i,j), j=1,n )
+    end do
+  end subroutine print
 
 end module matrix_utils

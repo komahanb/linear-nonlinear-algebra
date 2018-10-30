@@ -6,6 +6,7 @@ module direct_linear_solve
 
   ! import dependencies
   use iso_fortran_env, only : dp => REAL64
+  use matrix_utils, only : print 
 
   ! disable implicit datatypes
   implicit none
@@ -211,23 +212,57 @@ contains
     ! Locals
     real(dp) :: c, s, d, h
 
-    ! Find sin and cosine
-    h = hypot(x(1),x(2))
-    d = 1.0d0/h
-    c = abs(x(1))*d
-    s = sign(d,x(1))*x(2)
+    ! Prevent division by zero
+    if (x(2) .ne. 0.0d0) then
 
-    ! Set the new first entry
-    x(1) = sign(1.0_dp,x(1))*h
+       ! Find sin and cosine
+       h = hypot(x(1),x(2))
+       d = 1.0d0/h
+       c = abs(x(1))*d
+       s = sign(d,x(1))*x(2)
+
+       ! Set the new first entry
+       x(1) = sign(1.0_dp,x(1))*h
+
+    end if
 
     ! Zero out the second entry
     x(2) = 0.0d0
 
   end subroutine givens
 
+  pure subroutine givens_rotation(x,y, G)
+
+    real(dp), intent(in)  :: x, y
+    real(dp), intent(out) :: G(2,2)
+    real(dp) :: s, c, h
+    
+    ! Prevent division by zero
+    if (y .eq. 0.0d0) then
+
+       g(1,1) = 1.0d0
+       g(2,2) = 1.0d0
+       g(1,2) = 0.0d0
+       G(2,1) = 0.0d0
+
+    else
+
+       h = hypot(x,y)
+
+       c =  x/h
+       s = -y/h
+
+       g(1,1) = c
+       g(2,2) = c
+       g(1,2) = -s
+       G(2,1) = s
+
+    end if
+
+  end subroutine givens_rotation
+  
   !===================================================================!
-  ! QR facorization using Givens for special matrix structure. Do not
-  ! use for general matrices.
+  ! QR facorization using Givens rotation.
   !===================================================================!
   
   subroutine givens_factorization(A, Q, R)
@@ -236,43 +271,35 @@ contains
     real(dp), intent(in)    :: A(:,:)
     real(dp), intent(inout) :: Q(:,:), R(:,:)
 
-    ! Local variables
-    real(dp), allocatable :: x(:), v(:), ek(:)
-    integer  :: k, j, n, m
-    real(dp) :: scalar
+    integer  :: k, i, n, m
+    real(dp) :: G(2,2)
 
-    allocate(x, source = A(:,1))
-    allocate(v, source = A(:,1))
-
-    R = A
-
-    ! Initialize
+    ! Get matrix size
     m = size(A,1)
     n = size(A,2)
 
-    ! Only the first column has non zeros below diagonal
+    ! Copy matrix
+    R = A
+
+    ! Initialize Q with Identity
+    do concurrent(i=1:n)
+       Q(i,i) = 1.0d0
+    end do
+
+    ! Left multiply A by G to get R
+    ! Right multiply G to get Q^T
     cols: do k = 1, n
+       rows: do i = m-1, k, -1
 
-       ! Extract the column below the diagonal
-       x(k:m) = R(k:m, k)
+          ! Form 2 by 2 block of G matrix
+          call givens_rotation(R(i,k),R(i+1,k), G) 
 
-       ! Fimd the reflection vector 
-       v(k:m) = x(k:m)
-       v(k) = v(k) + sign(norm2(x(k:m)),x(k))
+          ! Multiply only necessary rows and columns to form R and Q
+          R(i:i+1,:) = matmul(G, R(i:i+1,:))
+          Q(:,i:i+1) = matmul(Q(:,i:i+1),transpose(G))
 
-       ! Normalize the reflection vector
-       v(k:m) = v(k:m)/norm2(v(k:m))
-
-       ! Perform householder transformation to zero out the lower
-       ! entries except one for each column of the matrix
-       do j = k , n
-          scalar = dot_product(v(k:m), R(k:m,j))
-          R(k:m,j) = R(k:m,j) - 2.0_dp*scalar*v(k:m)
-       end do
-
+       end do rows
     end do cols
-
-    deallocate(x,v)
 
   end subroutine givens_factorization
 
