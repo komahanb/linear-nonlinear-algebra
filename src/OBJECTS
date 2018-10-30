@@ -1,4 +1,5 @@
-objects=\
+objects= \
+matrix_utils.o \
 lapack.o \
 linear_algebra.o \
 direct_linear_solve.o \

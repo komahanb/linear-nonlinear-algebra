@@ -4,85 +4,159 @@
 
 program test
 
-  use direct_linear_solve, only : mgs_qrfactor, cgs_qrfactor, &
+  use iso_fortran_env     , only : dp => REAL64
+  use matrix_utils        , only : toepliz
+  use direct_linear_solve , only : mgs_qrfactor, cgs_qrfactor, &
        & householder, banded_householder, householder_factorization
-  use linear_algebra, only : eigvals, svdvals
+  !use direct_linear_solve , only : givens_factorization
+  use linear_algebra      , only : eigvals, svdvals
 
   implicit none
 
-  integer, parameter :: n  = 20
+  call test_givens_factorization()
 
-  ! integer, parameter :: sizes(10) = [100,200,300,400,500,600,700,800,900,1000]
-  ! integer, parameter :: sizes(7) = [100,200,400,800,1600,3200,6400]
+contains
   
-  real(8), allocatable :: A(:,:), B(:,:)
-  real(8), allocatable :: Q(:,:), R(:,:)
-  real(8), allocatable :: U(:,:), V(:,:), S(:,:), RC(:,:), RM(:,:)
-  real(8), allocatable :: svda(:)
+  subroutine test_givens_factorization
 
-  real(8) :: walltime1, walltime2, time_end, time_Start
-  integer :: i, info
+    real(dp), allocatable :: A(:,:), Q(:,:), R(:,:), D(:,:)
+    integer , parameter :: matsize = 4
+    integer :: i
+
+    allocate(Q(matsize, matsize))
+    allocate(R(matsize, matsize))
+    allocate(D(matsize, matsize))
+
+    allocate(A(matsize, matsize))
+    call matrix(A)
+    print *, 'matrix'
+    do i = 1, matsize
+       print *, A(i,:)
+    end do
+
+    print *, 'Performing Givens Transformation'
+    Q = 0
+    R = 0
+    !call givens_factorization(A, Q, R)
+
+    print *, 'Upper Triangular Matrix'
+    do i = 1, matsize
+       print *, R(i,:)
+    end do
+    
+    ! Check Orthogonality
+    D = matmul(Q,transpose(Q))
+    print *, 'orthogonality'
+    do i = 1, matsize
+       D(i,i) = 1.0d0 - D(i,i)
+       print *, D(i,i)
+    end do
+
+    deallocate(A,Q,R,D)
+
+  end subroutine test_givens_factorization
+
+  !===================================================================!
+  ! Setup Toepliz matrix with supplied columns
+  !===================================================================!
   
-  ! Allocte matrices
-  allocate(A(n,n), B(n,n), Q(n,n), R(n,n))
-  allocate(U(n,n), V(n,n), S(n,n), RC(n,n), RM(n,n))
-  U = 0
-  V = 0
-  S = 0
-  allocate(svda(n))
+  subroutine matrix(A)
 
-  ! Form a matrix with required singular values
-  call random_number(A)
-  call mgs_qrfactor(A, U, R, info)
+    real(8), allocatable :: A(:,:)
+    real(8), allocatable :: diag(:)
+    integer :: m, j
 
-  call random_number(A)
-  call mgs_qrfactor(A, V, R, info)
-  do i = 1, n
-     S(i,i) = 3.0d0**dble(-i)
-  end do
-  A = matmul(U,matmul(S,V))
+    A = 0
 
-  print *, 'performing classical GS on A'
-  call cgs_qrfactor(A, Q, RC, info)
-  S = matmul(Q,transpose(Q))
-  do i = 1, n
-     S(i,i) = 1.0d0 - S(i,i)
-     print *, S(i,i)
-  end do
+    call random_number(A(:,1))
+    call random_number(A(1,:))
+
+    m = size(A, 1)
+
+    allocate(diag(m))
+    call random_number(diag)    
+    do concurrent(j=1:m)
+       A(j,j) = diag(j)
+    end do
+    deallocate(diag)
+
+  end subroutine matrix
   
-  ! Perform orthogonality check
-  print *, n, norm2(S), norm2(A-matmul(Q,RC))
+  subroutine test_cgs_mgs_householder
 
-  print *, 'performing modified GS on A'
-  call mgs_qrfactor(A, Q, RM, info)
-  S = matmul(Q,transpose(Q))
-  do i = 1, n
-     S(i,i) = 1.0d0 - S(i,i)
-     print *, S(i,i)
-  end do
-  
-  ! Perform orthogonality check
-  print *, n, norm2(S), norm2(A-matmul(Q,RM))
+    integer, parameter :: n  = 200
 
-  print *, 'Householder'
-  Q = 0
-  R = 0
-  !call householder(A)
-  call householder_factorization(A, Q, R)
-  S = matmul(Q,transpose(Q))
-  do i = 1, n
-     S(i,i) = 1.0d0 - S(i,i)
-     print *, S(i,i)
-  end do
+    ! integer, parameter :: sizes(10) = [100,200,300,400,500,600,700,800,900,1000]
+    ! integer, parameter :: sizes(7) = [100,200,400,800,1600,3200,6400]
 
-  print *, "index ", "cgs ", "mgs ", "householder"
-  do i = 1, n
-     print *, i, RC(i,i), RM(i,i), abs(R(i,i))
-  end do
+    real(8), allocatable :: A(:,:), B(:,:)
+    real(8), allocatable :: Q(:,:), R(:,:)
+    real(8), allocatable :: U(:,:), V(:,:), S(:,:), RC(:,:), RM(:,:)
+    real(8), allocatable :: svda(:)
 
-  stop
-  
-  ! system 2
+    real(8) :: walltime1, walltime2, time_end, time_Start
+    integer :: i, info
+
+    ! Allocte matrices
+    allocate(A(n,n), B(n,n), Q(n,n), R(n,n))
+    allocate(U(n,n), V(n,n), S(n,n), RC(n,n), RM(n,n))
+    U = 0
+    V = 0
+    S = 0
+    allocate(svda(n))
+
+    ! Form a matrix with required singular values
+    call random_number(A)
+    call mgs_qrfactor(A, U, R, info)
+
+    call random_number(A)
+    call mgs_qrfactor(A, V, R, info)
+    do i = 1, n
+       S(i,i) = 3.0d0**dble(-i)
+    end do
+    A = matmul(U,matmul(S,V))
+
+    print *, 'performing classical GS on A'
+    call cgs_qrfactor(A, Q, RC, info)
+    S = matmul(Q,transpose(Q))
+    do i = 1, n
+       S(i,i) = 1.0d0 - S(i,i)
+       print *, S(i,i)
+    end do
+
+    ! Perform orthogonality check
+    print *, n, norm2(S), norm2(A-matmul(Q,RC))
+
+    print *, 'performing modified GS on A'
+    call mgs_qrfactor(A, Q, RM, info)
+    S = matmul(Q,transpose(Q))
+    do i = 1, n
+       S(i,i) = 1.0d0 - S(i,i)
+       print *, S(i,i)
+    end do
+
+    ! Perform orthogonality check
+    print *, n, norm2(S), norm2(A-matmul(Q,RM))
+
+    print *, 'Householder'
+    Q = 0
+    R = 0
+    !call householder(A)
+    call householder_factorization(A, Q, R)
+    S = matmul(Q,transpose(Q))
+    do i = 1, n
+       S(i,i) = 1.0d0 - S(i,i)
+       print *, S(i,i)
+    end do
+
+    print *, "index ", "cgs ", "mgs ", "householder"
+    do i = 1, n
+       print *, i, RC(i,i), RM(i,i), abs(R(i,i))
+    end do
+
+    stop
+
+    ! system 2
 !!$
 !!$  print *, "npts ", "walltime1 ", "walltime2"
 !!$  
@@ -140,35 +214,6 @@ program test
 !!$  end do
 !!$  
 
-contains
-  
-  subroutine toepliz(col, A)
-
-    real(8), allocatable :: A(:,:)
-    real(8) :: col(:)
-    integer :: m, i, j
-
-    m = size(A, 1)
-    do j = 1, m
-       do i = 1, m
-          if (i.eq.j) then
-             A(i,j) = col(1)
-          else if (i+1.eq.j .or.i-1.eq.j) then
-             A(i,j) = col(2)
-             A(j,i) = col(2)
-          else if (i+2.eq.j .or.i-2.eq.j) then
-             A(i,j) = col(3)
-             A(j,i) = col(3)
-          else if (i+3.eq.j .or.i-3.eq.j) then
-             A(i,j) = col(4)
-             A(j,i) = col(4)
-          else if (i+4.eq.j .or.i-4.eq.j) then
-             A(i,j) = col(5)
-             A(j,i) = col(5)
-          end if
-       end do
-    end do
-
-  end subroutine toepliz
+  end subroutine test_cgs_mgs_householder
 
 end program test
