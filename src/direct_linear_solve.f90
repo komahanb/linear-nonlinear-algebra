@@ -18,14 +18,89 @@ module direct_linear_solve
   public :: dlufactor, dluppfactor
   public :: mgs_qrfactor, cgs_qrfactor, householder, banded_householder
   public :: householder_factorization, givens_factorization
-  public :: givens
+  public :: givens, qriteration
 
 contains
   
   !===================================================================!
+  ! QR iteration to solve EVP
+  !===================================================================!
+  
+  subroutine QRiteration(A, T, U, maxiters, tol)
+
+    ! Arguments
+    real(dp), intent(inout) :: A(:,:), U(:,:), T(:,:)
+    integer , intent(in)    :: maxiters
+    real(dp), intent(in)    :: tol
+
+    ! Locals
+    real(dp), allocatable   :: Q(:,:), R(:,:), D(:,:)
+    real(dp) :: norm
+    integer  :: k, i, n, m, iter
+    real(dp) :: G(2,2)
+
+    ! Initialize
+    m = size(A,1)
+    n = size(A,2)
+
+    ! Copy A into T
+    T = A
+
+    ! Allocate space for QR factorization
+    allocate(Q, R, D, mold=A)
+    Q = 0
+    R = 0
+    D = 0
+    
+    ! Initialize Q with Identity
+    U = 0
+    do concurrent(i=1:n)
+       U(i,i) = 1.0d0
+    end do
+
+    norm = huge(1.0d0)
+
+    iter = 1
+    do while (&
+         & norm .gt. tol .or. &
+         & iter .gt. maxiters)
+
+       ! QR
+       call givens_factorization(T, Q, R)
+       call print(T)
+       call print (Q)
+       call print(R)
+
+
+       stop
+       ! A = RQ
+       T = matmul(R,Q)
+
+       ! Update transformation matrix
+       U = matmul(U,Q)
+       
+       ! Elements below diagonal should have converged to zero to
+       ! specified tolerance
+       D = T
+       do i = 1, n       
+          D(i,i) = 0.0d0
+       end do
+       norm = norm2(D)
+
+       print *, n, iter , norm
+
+       iter = iter + 1
+       
+    end do
+
+    deallocate(R,Q,D)
+
+  end subroutine QRiteration
+
+  !===================================================================!
   ! QR facorization using Householder algorithm for banded matrix. The
   ! upper triangular part of a contains R.
-  ! ===================================================================!
+  !===================================================================!
   
    subroutine banded_householder(A, p, q)
 
